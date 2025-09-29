@@ -1,0 +1,671 @@
+/**
+ * @license
+ * Copyright 2021 Google LLC.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * This file demonstrates a Google Maps and Deck.gl integration with custom UI
+ * controls for filtering data (connections and pins) on the map.
+ */
+
+// Tell TypeScript that 'deck' is a global object, loaded via a script tag.
+declare const deck: any;
+
+// TODO: Use imports when Deck.gl works in more bundlers
+// https://github.com/visgl/deck.gl/issues/6351#issuecomment-1079424167
+import type * as GeoJSON from "geojson";
+
+const ScatterplotLayer = deck.ScatterplotLayer;
+const ArcLayer = deck.ArcLayer;
+const GoogleMapsOverlay = deck.GoogleMapsOverlay;
+
+// ---------------------- Types & Data ----------------------
+
+type Properties = { scalerank?: number; Connection_type?: string; from?: any; to?: any };
+type Feature = GeoJSON.Feature<GeoJSON.Geometry, Properties>;
+type Data = GeoJSON.FeatureCollection<GeoJSON.Geometry, Properties> | any[];
+
+const connections: string | Data = "database/connections_geojson_like.json";
+const points: string | Data = "database/points.json";
+
+// ---------------------- Helper Functions ----------------------
+
+/**
+ * Gets a nested property, checking multiple possible locations.
+ * @param {any} d The data object.
+ * @param {string} key The property key (e.g., 'Connection_type', 'coordinates').
+ * @returns {any} The property value or undefined.
+ */
+function getProp(d: any, key: string): any {
+  return d?.[key] ?? d?.properties?.[key] ?? d?.connectionType;
+}
+
+/**
+ * Normalizes connection type from a data object.
+ * @param {any} d The data object.
+ * @returns {string} The normalized connection type ("N", "C", "H", or default).
+ */
+function getConnType(d: any): string {
+  const t = getProp(d, "Connection_type") ?? getProp(d, "connection_type");
+  const up = String(t).trim().toUpperCase();
+  if (up === "N_TYPE") return "N";
+  return up;
+}
+
+/**
+ * Extracts the name from a point data object.
+ * @param {any} d The data object for a point.
+ * @returns {string} The name of the point.
+ */
+function getPointName(d: any): string {
+  return getProp(d, "name") ?? "";
+}
+
+// ---------------------- Pin Type Logic ----------------------
+
+// Define types for pin categorization based on color groups.
+type PointType = 
+  | "YELLOW_GROUP"    
+  | "PURPLE_GROUP"    
+  | "ORANGE_GROUP"    
+  | "GREEN_GROUP"     
+  | "RED_GROUP"       
+  | "TURQUOISE_GROUP" 
+  | "VIOLET_GROUP"    
+  | "BLUE_GROUP"      
+  | "PINK_GROUP";     
+
+/**
+ * Groups all related pin filtering logic, data, and constants into a single object.
+ * This improves organization and maintainability.
+ */
+const PinLogic = {
+  ALL_POINT_TYPES: [
+    "RED_GROUP", "TURQUOISE_GROUP", "YELLOW_GROUP", "GREEN_GROUP", 
+    "PURPLE_GROUP", "ORANGE_GROUP", "BLUE_GROUP", "VIOLET_GROUP", "PINK_GROUP"
+  ] as PointType[],
+
+  // Map PinType to RGBA colors.
+  PIN_COLOR_MAP: {
+    "RED_GROUP":       [200, 0, 0, 220],
+    "TURQUOISE_GROUP": [64, 224, 208, 220],
+    "YELLOW_GROUP":    [255, 255, 0, 220], 
+    "GREEN_GROUP":     [0, 128, 0, 220],
+    "PURPLE_GROUP":    [128, 0, 128, 220],
+    "ORANGE_GROUP":    [255, 165, 0, 220],
+    "BLUE_GROUP":      [0, 120, 255, 220],
+    "VIOLET_GROUP":    [130, 42, 245, 220],
+    "PINK_GROUP":      [255, 105, 180, 220]
+  } as Record<PointType, [number, number, number, number]>,
+
+  /**
+   * Optimized Hash Map for O(1) pin type lookup.
+   */
+  PIN_LOOKUP_MAP: {
+    // VIOLET_GROUP
+    "sb": "VIOLET_GROUP",
+    
+    // YELLOW_GROUP
+    "H_AK": "YELLOW_GROUP",
+    "Point 13": "YELLOW_GROUP",
+    "E": "YELLOW_GROUP",
+    "Point 6": "YELLOW_GROUP",
+    
+    // PURPLE_GROUP
+    "T_california": "PURPLE_GROUP",
+    
+    // ORANGE_GROUP
+    "B": "ORANGE_GROUP",
+    
+    // GREEN_GROUP
+    "M": "GREEN_GROUP",
+    
+    // RED_GROUP
+    "Point 5": "RED_GROUP",
+    
+    // TURQUOISE_GROUP
+    "PENT": "TURQUOISE_GROUP",
+    "COS": "TURQUOISE_GROUP",
+    "TB": "TURQUOISE_GROUP",
+    "RR": "TURQUOISE_GROUP",
+    "AZ": "TURQUOISE_GROUP",
+    "IP": "TURQUOISE_GROUP",
+    
+    // PINK_GROUP (Filter 'F')
+    "SAN": "PINK_GROUP",
+    "SBL": "PINK_GROUP",
+    "LUL": "PINK_GROUP",
+  } as Record<string, PointType>,
+}
+
+let activePointTypes = new Set<PointType>(PinLogic.ALL_POINT_TYPES);
+
+/**
+ * Categorizes a pin into one of the filterable color groups based on its name.
+ * Uses a Hash Map (O(1) average lookup) for performance.
+ * @param {any} d The pin data object.
+ * @returns {PointType} The categorized type.
+ */
+function getPinkType(d: any): PointType { 
+  const name = getPointName(d);
+  // Lookup the name in the map, defaulting to BLUE_GROUP if not found.
+  return PinLogic.PIN_LOOKUP_MAP[name] ?? "BLUE_GROUP";
+}
+
+/**
+ * Assigns an RGBA color to a pin based on its type.
+ * @param {any} d The pin data object.
+ * @returns {[number, number, number, number]} An RGBA color array.
+ */
+function colorPinkByType(d: any): [number, number, number, number] { 
+  const type = getPinkType(d);
+  return PinLogic.PIN_COLOR_MAP[type];
+}
+
+/**
+ * Assigns an RGBA color to a connection based on its type.
+ * @param {any} d The connection data object.
+ * @returns {[number, number, number, number]} An RGBA color array.
+ */
+function colorByTypeRGBA(d: any): [number, number, number, number] {
+  switch (getConnType(d)) {
+    case "N":
+      return [0, 128, 200, 220];
+    case "C":
+      return [0, 200, 0, 220];
+    case "H":
+      return [200, 0, 0, 220];
+    default:
+      return [128, 128, 128, 200];
+  }
+}
+
+/**
+ * Assigns a tilt angle to a connection based on its type.
+ * @param {any} d The connection data object.
+ * @returns {number} The tilt angle in degrees.
+ */
+function tiltByType(d: any): number {
+  switch (getConnType(d)) {
+    case "N":
+      return 5;
+    case "C":
+      return 10;
+    case "H":
+      return 0;
+    default:
+      return 0;
+  }
+}
+
+/**
+ * Gets the source position (longitude, latitude) from a connection data object.
+ * @param {any} d The connection data object.
+ * @returns {[number, number]} The source coordinates.
+ */
+function getSourcePos(d: any): [number, number] {
+  const src = getProp(d, "from")?.coordinates ?? getProp(d, "coordinates")?.[0];
+  return src as [number, number];
+}
+
+/**
+ * Gets the target position (longitude, latitude) from a connection data object.
+ * @param {any} d The connection data object.
+ * @returns {[number, number]} The target coordinates.
+ */
+function getTargetPos(d: any): [number, number] {
+  const tgt = getProp(d, "to")?.coordinates ?? getProp(d, "coordinates")?.slice(-1)[0];
+  return tgt as [number, number];
+}
+
+/**
+ * Makes a color darker by half for use as a target color.
+ * @param {[number, number, number, number]} color The input RGBA color array.
+ * @returns {[number, number, number, number]} The darker RGBA color array.
+ */
+function darker([r, g, b, a]: [number, number, number, number]): [number, number, number, number] {
+  return [Math.floor(r * 0.5), Math.floor(g * 0.5), Math.floor(b * 0.5), a ?? 255];
+}
+
+/**
+ * Formats a number to a fixed number of decimal places.
+ * @param {number | undefined} n The input number.
+ * @param {number} [p=5] The number of decimal places.
+ * @returns {string} The formatted number as a string.
+ */
+function fmt(n?: number, p = 5) {
+  return typeof n === "number" ? n.toFixed(p) : "";
+}
+
+/**
+ * Extracts longitude and latitude from a GeoJSON point object.
+ * @param {any} obj The GeoJSON object.
+ * @returns {[number, number] | null} The coordinates or null.
+ */
+function asLngLat(obj: any): [number, number] | null {
+  if (obj?.geometry?.type === "Point") return obj.geometry.coordinates as [number, number];
+  if (Array.isArray(obj?.coordinates)) return obj.coordinates as [number, number];
+  return null;
+}
+
+// ---------------------- Filtering (GPU) ----------------------
+
+type ConnType = "N" | "C" | "H";
+const ALL_TYPES: ConnType[] = ["N", "C", "H"];
+let activeTypes = new Set<ConnType>(ALL_TYPES);
+
+let overlay: any;
+const dataFilterExt = new deck.DataFilterExtension({ filterSize: 1 });
+
+/**
+ * Generates a unique key from active connection types to trigger layer updates.
+ * @returns {string} A string representing the current active connection types.
+ */
+function filterKey() {
+  return Array.from(activeTypes).sort().join(",");
+}
+
+// ---------------------- Build Layers ----------------------
+
+/**
+ * Builds the Deck.gl layers (ArcLayer for connections, ScatterplotLayer for pins).
+ * Filters are applied based on the global `activeTypes` and `activePointTypes` sets.
+ * @returns {Array<any>} An array containing the Deck.gl layers.
+ */
+function buildLayers() {
+  const connectionsLayer = new ArcLayer({
+    id: "flights",
+    data: connections,
+    getSourcePosition: (d: any) => getSourcePos(d),
+    getTargetPosition: (d: any) => getTargetPos(d),
+    getSourceColor: (d: any) => colorByTypeRGBA(d),
+    getTargetColor: (d: any) => darker(colorByTypeRGBA(d)),
+    getTilt: (d: any) => tiltByType(d),
+    getWidth: 2,
+    pickable: true,
+    // Filter by connection type
+    getFilterValue: (d: any) => (activeTypes.has(getConnType(d) as ConnType) ? 1 : 0),
+    filterRange: [1, 1],
+    extensions: [dataFilterExt],
+    updateTriggers: { getFilterValue: filterKey() }
+  });
+
+  const pinsLayer = new ScatterplotLayer({
+    id: "pins",
+    data: points,
+    dataTransform: (d: any) => (d && d.type === "FeatureCollection" ? d.features : d),
+    pickable: true,
+    autoHighlight: true,
+    getPosition: (d: any) => d.geometry.coordinates,
+    radiusUnits: "pixels",
+    radiusMinPixels: 11,
+    radiusMaxPixels: 18,
+    getFillColor: (d: any) => colorPinkByType(d), 
+    stroked: true,
+    getLineColor: [0, 0, 0, 200],
+    lineWidthMinPixels: 1,
+    // Filter by pin type/group
+    getFilterValue: (d: any) => activePointTypes.has(getPinkType(d)) ? 1 : 0, 
+    filterRange: [1, 1],
+    extensions: [dataFilterExt],
+    updateTriggers: { getFilterValue: Array.from(activePointTypes).sort().join(",") }
+  });
+
+  return [connectionsLayer, pinsLayer];
+}
+
+// ---------------------- UI: Legend and Controls ----------------------
+
+// Storage for checkbox references to allow "All" buttons to toggle them.
+const connCheckboxes: HTMLInputElement[] = [];
+const pinCheckboxes: HTMLInputElement[] = [];
+
+/**
+ * Creates and adds the filter UI controls (two legend boxes) to the map.
+ * @param {() => void} onChange Callback function to call when a filter changes.
+ */
+function addMultiFilterControls(onChange: () => void) {
+  const mainContainer = document.createElement("div");
+  mainContainer.id = "controls-container";
+  mainContainer.style.cssText = `
+    position:absolute; z-index:5; top:10px; left:10px;
+    font: 13px system-ui, sans-serif;
+    display:flex; flex-direction:column; gap:10px;
+  `;
+  
+  /**
+   * Creates a standardized legend box div.
+   * @returns {HTMLDivElement} A styled legend box element.
+   */
+  const makeLegendBox = () => {
+    const box = document.createElement("div");
+    box.style.cssText = `
+      background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,.15);
+      padding:8px 10px;
+      display:flex; gap:20px; align-items:flex-start; flex-wrap:nowrap;
+    `;
+    return box;
+  };
+
+  /**
+   * Creates a standardized button element.
+   * @param {string} txt The text to display on the button.
+   * @param {() => void} handler The click event handler.
+   * @returns {HTMLButtonElement} A button element.
+   */
+  const makeBtn = (txt: string, handler: () => void) => {
+    const b = document.createElement("button");
+    b.textContent = txt;
+    b.style.cssText = `
+      padding:6px 10px; border:1px solid #ccc; border-radius:6px;
+      background:#f7f7f7; cursor:pointer;
+    `;
+    b.onclick = handler;
+    return b;
+  };
+  
+  /**
+   * Generates checkboxes for a filter group, reducing redundant code.
+   * @param {Array<Object>} items Array of filter items.
+   * @param {Set<string>} activeSet The set tracking active filters.
+   * @param {HTMLInputElement[]} checkboxArray Array to store checkbox refs.
+   * @param {() => void} onChange Callback for filter change.
+   * @returns {HTMLDivElement} Container with all checkboxes.
+   */
+  const createFilterCheckboxes = (
+    items: { key: string; label: string; color: string }[],
+    activeSet: Set<any>,
+    checkboxArray: HTMLInputElement[],
+    onChange: () => void
+  ) => {
+    const container = document.createElement("div");
+    container.style.cssText = `
+      display:flex; flex-direction:column; gap:10px;
+    `;
+    items.forEach(({ key, label, color }) => {
+      const wrap = document.createElement("label");
+      wrap.style.cssText = `display:flex; align-items:center; gap:6px;`;
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = activeSet.has(key);
+      cb.onchange = () => {
+        if (cb.checked) activeSet.add(key);
+        else activeSet.delete(key);
+        onChange();
+      };
+      checkboxArray.push(cb); 
+
+      const swatch = document.createElement("span");
+      swatch.style.cssText = `
+        display:inline-block; width:10px; height:10px; background:${color};
+        border-radius:2px; border:1px solid rgba(0,0,0,.2);
+      `;
+
+      const text = document.createElement("span");
+      text.textContent = label;
+
+      wrap.appendChild(cb);
+      wrap.appendChild(swatch);
+      wrap.appendChild(text);
+      container.appendChild(wrap);
+    });
+    return container;
+  };
+
+  // --- Connections Legend Box ---
+  const connectionsLegend = makeLegendBox();
+  const connectionsTitle = document.createElement("h2");
+  connectionsTitle.textContent = "Connections";
+  connectionsTitle.style.cssText = `font-size:16px; margin:0 0 10px 0;`;
+  connectionsLegend.prepend(connectionsTitle);
+
+  // Buttons section for Connections
+  const connectionsButtonSection = document.createElement("div");
+  connectionsButtonSection.style.cssText = `
+    display:flex; flex-direction:column; gap:10px;
+  `;
+  
+  // All Connections toggle button
+  const allConnBtn = makeBtn("All Connections", () => {
+    // If ALL are active, next state is clear all (false). Otherwise, select all (true).
+    const isAllConnectionsActive = activeTypes.size === ALL_TYPES.length;
+    const newState = !isAllConnectionsActive; 
+    
+    // Mutate the existing Set, don't reassign the variable.
+    activeTypes.clear();
+    if (newState) {
+        ALL_TYPES.forEach(type => activeTypes.add(type));
+    }
+
+    // Update the visual state of all checkboxes
+    connCheckboxes.forEach(cb => cb.checked = newState);
+
+    onChange();
+  });
+  connectionsButtonSection.appendChild(allConnBtn);
+  
+  // Connection types for checkboxes
+  const connItems: { key: ConnType; label: string; color: string }[] = [
+    { key: "N", label: "N", color: "rgb(0,128,200)" },
+    { key: "C", label: "C", color: "rgb(0,200,0)" },
+    { key: "H", label: "H", color: "rgb(200,0,0)" }
+  ];
+  
+  const connectionsCheckboxSection = createFilterCheckboxes(
+    connItems, activeTypes, connCheckboxes, onChange
+  );
+
+  connectionsLegend.appendChild(connectionsButtonSection);
+  connectionsLegend.appendChild(connectionsCheckboxSection);
+  mainContainer.appendChild(connectionsLegend);
+
+  // --- Pins Legend Box ---
+  const pinsLegend = makeLegendBox();
+  const pinsTitle = document.createElement("h2");
+  pinsTitle.textContent = "Pins";
+  pinsTitle.style.cssText = `font-size:16px; margin:0 0 10px 0;`;
+  pinsLegend.prepend(pinsTitle);
+
+  // Buttons section for Pins
+  const pinsButtonSection = document.createElement("div");
+  pinsButtonSection.style.cssText = `
+    display:flex; flex-direction:column; gap:10px;
+  `;
+
+  // All Pins toggle button
+  const allPinsBtn = makeBtn("All Pins", () => {
+    // If ALL are active, next state is clear all (false). Otherwise, select all (true).
+    const isAllPinsActive = activePointTypes.size === PinLogic.ALL_POINT_TYPES.length;
+    const newState = !isAllPinsActive; 
+
+    // Mutate the existing Set, don't reassign the variable.
+    activePointTypes.clear();
+    if (newState) {
+        PinLogic.ALL_POINT_TYPES.forEach(type => activePointTypes.add(type));
+    }
+
+    // Update the visual state of all checkboxes
+    pinCheckboxes.forEach(cb => cb.checked = newState);
+
+    onChange();
+  });
+  pinsButtonSection.appendChild(allPinsBtn);
+  
+  // Pin groups for checkboxes
+  const pinItems: { key: PointType; label: string; color: string }[] = [
+    { key: "PINK_GROUP",      label: "F",  color: "rgb(255, 105, 180)" }, 
+    { key: "VIOLET_GROUP",    label: "SB", color: "rgb(130, 42, 245)" },
+    { key: "RED_GROUP",       label: "P",  color: "rgb(200, 0, 0)" }, 
+    { key: "TURQUOISE_GROUP", label: "D",  color: "rgb(64, 224, 208)" }, 
+    { key: "YELLOW_GROUP",    label: "G",  color: "rgb(255, 255, 0)" },
+    { key: "GREEN_GROUP",     label: "M",  color: "rgb(0, 128, 0)" }, 
+    { key: "PURPLE_GROUP",    label: "T",  color: "rgb(128, 0, 128)" }, 
+    { key: "ORANGE_GROUP",    label: "B",  color: "rgb(255, 165, 0)" }, 
+    { key: "BLUE_GROUP",      label: "S",  color: "rgb(0, 120, 255)" }
+  ];
+  
+  const pinsCheckboxSection = createFilterCheckboxes(
+    pinItems, activePointTypes, pinCheckboxes, onChange
+  );
+
+  pinsLegend.appendChild(pinsButtonSection);
+  pinsLegend.appendChild(pinsCheckboxSection);
+  mainContainer.appendChild(pinsLegend);
+  
+  document.body.appendChild(mainContainer);
+}
+
+
+/**
+ * Creates and adds a UI box to display clicked coordinates.
+ */
+function addCoordinatesUI() {
+  const coordsContainer = document.createElement("div");
+  coordsContainer.id = "coords-container";
+  coordsContainer.style.cssText = `
+    position: absolute; z-index: 5; bottom: 30px; left: 10px;
+    background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    padding: 8px 10px;
+    font: 13px system-ui, sans-serif;
+    display: flex; flex-direction: column; gap: 5px;
+  `;
+
+  const title = document.createElement("h3");
+  title.textContent = "Clicked Coordinates";
+  title.style.cssText = `font-size: 14px; margin: 0;`;
+  coordsContainer.appendChild(title);
+
+  const latText = document.createElement("div");
+  latText.id = "lat-display";
+  latText.textContent = "Latitude: -";
+  coordsContainer.appendChild(latText);
+
+  const lngText = document.createElement("div");
+  lngText.id = "lng-display";
+  lngText.textContent = "Longitude: -";
+  coordsContainer.appendChild(lngText);
+
+  const clearBtn = document.createElement("button");
+  clearBtn.textContent = "Clear";
+  clearBtn.style.cssText = `
+    padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px;
+    background: #f7f7f7; cursor: pointer; margin-top: 5px;
+  `;
+  clearBtn.onclick = () => {
+    updateCoordinatesUI(null, null);
+  };
+  coordsContainer.appendChild(clearBtn);
+
+  document.body.appendChild(coordsContainer);
+}
+
+/**
+ * Updates the UI with the given latitude and longitude.
+ * @param {number | null} lat The latitude to display.
+ * @param {number | null} lng The longitude to display.
+ */
+function updateCoordinatesUI(lat: number | null, lng: number | null) {
+  const latEl = document.getElementById("lat-display");
+  const lngEl = document.getElementById("lng-display");
+  if (latEl && lngEl) {
+    latEl.textContent = `Latitude: ${lat !== null ? lat.toFixed(6) : '-'}`;
+    lngEl.textContent = `Longitude: ${lng !== null ? lng.toFixed(6) : '-'}`;
+  }
+}
+
+// ---------------------- Initialization ----------------------
+
+/**
+ * Initializes the Google Maps and Deck.gl map, along with the UI controls.
+ */
+function initMap(): void {
+  const map = new google.maps.Map(
+    document.getElementById("map") as HTMLElement,
+    {
+      center: { lat: 39.5, lng: -98.35 },
+      zoom: 4,
+      tilt: 30,
+      mapId: "90f87356969d889c",
+      styles: [
+        { featureType: "administrative.province", elementType: "labels", stylers: [{ visibility: "off" }] },
+        { featureType: "administrative.province", elementType: "geometry.stroke", stylers: [{ visibility: "on" }] }
+      ]
+    }
+  );
+
+  // Add UI controls and set up the callback to update the overlay on filter change.
+  addMultiFilterControls(() => {
+    overlay.setProps({ layers: buildLayers() });
+  });
+
+  // Add the new coordinates UI box.
+  addCoordinatesUI();
+
+  // Add a click listener to the map to update coordinates.
+  map.addListener("click", (mapsMouseEvent: google.maps.MapMouseEvent) => {
+    const coords = mapsMouseEvent.latLng;
+    updateCoordinatesUI(coords.lat(), coords.lng());
+  });
+
+
+  // Create the Deck.gl overlay and add the initial layers.
+  overlay = new GoogleMapsOverlay({
+    layers: buildLayers(),
+    getTooltip: ({ object, layer }) => {
+      if (!object) return null;
+      
+      const { properties } = object;
+
+      // Tooltip for pins
+      if (layer?.id === "pins") {
+        const name = properties?.name ?? "Pin";
+        const [lng, lat] = asLngLat(object) ?? [];
+        return {
+          html: `
+            <div style="font-family:system-ui; font-size:12px; line-height:1.35;">
+              <div><b>${name}</b></div>
+              <div><b>Lat</b>: ${fmt(lat)}</div>
+              <div><b>Lng</b>: ${fmt(lng)}</div>
+            </div>
+          `
+        };
+      }
+
+      // Tooltip for connections
+      const fromObj = object?.from ?? properties?.from;
+      const toObj = object?.to ?? properties?.to;
+      
+      const fromName = fromObj?.name ?? "From";
+      const toName = toObj?.name ?? "To";
+      
+      const from = fromObj?.coordinates;
+      const to = toObj?.coordinates;
+      
+      const [flng, flat] = Array.isArray(from) ? from : [];
+      const [tlng, tlat] = Array.isArray(to) ? to : [];
+
+      return {
+        html: `
+          <div style="font-family:system-ui; font-size:12px; line-height:1.35;">
+            <div style="margin-bottom:4px;"><b>Connection</b>: ${getConnType(object)}</div>
+            <div><b>${fromName}</b> — Lat: ${fmt(flat)} | Lng: ${fmt(flng)}</div>
+            <div><b>${toName}</b> &nbsp;&nbsp;— Lat: ${fmt(tlat)} | Lng: ${fmt(tlng)}</div>
+          </div>
+        `
+      };
+    }
+  });
+
+  // Add the overlay to the map.
+  overlay.setMap(map);
+}
+
+// Export initMap globally for the Maps API to call it.
+declare global {
+  interface Window {
+    initMap: () => void;
+  }
+}
+window.initMap = initMap;
+
+export {};

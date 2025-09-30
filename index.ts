@@ -3,10 +3,12 @@
  * Copyright 2021 Google LLC.
  * SPDX-License-Identifier: Apache-2.0
  *
- * Google Maps + Deck.gl with:
- *  - Connection type filters (N/C/H)
- *  - Pin group filters
- *  - Toggles to hide connections that touch (-82.492696, 27.8602) and (9.077841, 48.73448)
+ * Google Maps + Deck.gl integration:
+ * - Connection type filters (N/C/H)
+ * - Pin group filters
+ * - Toggles to hide connections that touch specific coordinates (-82.492696, 27.8602) and (9.077841, 48.73448)
+ *
+ * NOTE: Native map labels are permanently hidden via map styles to prioritize custom tooltips.
  */
 
 // Tell TypeScript that 'deck' is a global object, loaded via a script tag.
@@ -14,15 +16,19 @@ declare const deck: any;
 
 import type * as GeoJSON from "geojson";
 
+// Deck.gl Layer constructors
 const ScatterplotLayer = deck.ScatterplotLayer;
 const ArcLayer = deck.ArcLayer;
 const GoogleMapsOverlay = deck.GoogleMapsOverlay;
 const iconLayer = deck.IconLayer;
 const DataFilterExtension = deck.DataFilterExtension;
+const TextLayer = deck.TextLayer; // TextLayer for persistent labels
+
+// Icon asset URLs
 const airplaneIcon = "database/icons/airplane.png";
 const boatIcon = "database/icons/a-large-navy-ship-silhouette-vector.png";
 const truckIcon = "database/icons/truck.png";
-const trailerIcon = "database/icons/trailer.png"
+const trailerIcon = "database/icons/trailer.png";
 const STATE_LINES_ONLY_MAP_STYLE = [
   { featureType: "road", elementType: "geometry", stylers: [{ visibility: "off" }] },
   { featureType: "road", elementType: "labels", stylers: [{ visibility: "off" }] },
@@ -43,16 +49,49 @@ const ICON_MAP = {
   trailer: trailerIcon,
 };
 
+// ---------------------- Permanent Map Style (Hides All Native Labels) ----------------------
+
+// Style aggressively hides all map labels and most road lines to guarantee custom tooltips are visible.
+const PERMANENT_HIDE_LABELS_STYLE: google.maps.MapTypeStyle[] = [
+    // Target all label types (administrative areas, points of interest, transit)
+    { featureType: "administrative", elementType: "labels", stylers: [{ visibility: "off" }] },
+    { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+    { featureType: "transit", elementType: "labels", stylers: [{ visibility: "off" }] },
+    
+    // Target road labels explicitly
+    { featureType: "road", elementType: "labels", stylers: [{ visibility: "off" }] },
+    
+    // Target road geometry/lines themselves, as they often carry associated labels
+    { featureType: "road.highway", elementType: "geometry", stylers: [{ visibility: "off" }] },
+    { featureType: "road.arterial", elementType: "geometry", stylers: [{ visibility: "off" }] },
+    { featureType: "road.local", elementType: "geometry", stylers: [{ visibility: "off" }] },
+    
+    // Fallback for all elements
+    { featureType: "all", elementType: "labels", stylers: [{ visibility: "off" }] }
+];
+
+
 // ---------------------- Types & Data ----------------------
 
-type Properties = { scalerank?: number; Connection_type?: string; from?: any; to?: any; name?: string };
+type Properties = {
+  scalerank?: number;
+  Connection_type?: string;
+  from?: any;
+  to?: any;
+  name?: string;
+};
 type Feature = GeoJSON.Feature<GeoJSON.Geometry, Properties>;
 type Data = GeoJSON.FeatureCollection<GeoJSON.Geometry, Properties> | any[];
 
-const connections: string | Data = "database/connections_geojson_like.json";
-const points: string | Data = "database/points.json";
+// Data sources
+const CONNECTIONS_DATA_URL: string = "database/connections_geojson_like.json";
+const POINTS_DATA_URL: string = "database/points.json";
 
-//test icon pin
+let processedConnections: any[] = [];
+let processedPins: any[] = [];
+let processedIcons: any[] = [];
+
+// Example feature for pin display testing
 const feature = {
   type: "Feature",
   properties: { name: "E6" },
@@ -61,18 +100,33 @@ const feature = {
 
 // ---------------------- Helper Functions ----------------------
 
+/**
+ * Retrieve a property from an object, optionally checking nested 'properties'.
+ */
 function getProp(d: any, key: string): any {
   return d?.[key] ?? d?.properties?.[key] ?? d?.connectionType;
 }
+
+/**
+ * Normalize and return the connection type for a feature.
+ */
 function getConnType(d: any): string {
   const t = getProp(d, "Connection_type") ?? getProp(d, "connection_type");
   const up = String(t ?? "").trim().toUpperCase();
   if (up === "N_TYPE") return "N";
   return up; // "N" | "C" | "HF" | (others)
 }
+
+/**
+ * Retrieve the name property from a feature.
+ */
 function getPointName(d: any): string {
   return getProp(d, "name") ?? "";
 }
+
+/**
+ * Toggle display of a DOM element.
+ */
 function toggleDisplay(el: HTMLElement, force?: boolean) {
   const shouldShow = force !== undefined ? force : el.style.display === "none";
   el.style.display = shouldShow ? "flex" : "none";
@@ -92,12 +146,16 @@ type PointType =
   | "PINK_GROUP"
   | "WHITE_GROUP";
 
+/**
+ * Pin group logic for mapping pin names to colors and types.
+ */
 const PinLogic = {
   ALL_POINT_TYPES: [
     "RED_GROUP", "TURQUOISE_GROUP", "YELLOW_GROUP", "GREEN_GROUP",
     "PURPLE_GROUP", "ORANGE_GROUP", "BLUE_GROUP", "VIOLET_GROUP", "PINK_GROUP", "WHITE_GROUP"
   ] as PointType[],
 
+  // RGBA color map for each pin group
   PIN_COLOR_MAP: {
     RED_GROUP:       [200, 0, 0, 220],
     TURQUOISE_GROUP: [64, 224, 208, 220],
@@ -108,9 +166,10 @@ const PinLogic = {
     BLUE_GROUP:      [0, 120, 255, 220],
     VIOLET_GROUP:    [130, 42, 245, 220],
     PINK_GROUP:      [255, 105, 180, 220],
-    WHITE_GROUP: [197, 110, 255, 220]
+    WHITE_GROUP:     [197, 110, 255, 255]
   } as Record<PointType, [number, number, number, number]>,
 
+  // Pin name to group mapping
   PIN_LOOKUP_MAP: {
     // VIOLET_GROUP
     "sb": "VIOLET_GROUP",
@@ -165,16 +224,26 @@ const PinLogic = {
 
 let activePointTypes = new Set<PointType>(PinLogic.ALL_POINT_TYPES);
 
-function getPinkType(d: any): PointType {
+/**
+ * Determine pin type (group) from a feature.
+ */
+function getPinType(d: any): PointType {
   const name = getPointName(d);
   return PinLogic.PIN_LOOKUP_MAP[name] ?? "BLUE_GROUP";
 }
+
+/**
+ * Get RGBA color for a pin feature based on type.
+ */
 function colorPinkByType(d: any): [number, number, number, number] {
-  return PinLogic.PIN_COLOR_MAP[getPinkType(d)];
+  return PinLogic.PIN_COLOR_MAP[getPinType(d)];
 }
 
 // ---------------------- Connection Styling ----------------------
 
+/**
+ * Get RGBA color for a connection feature based on type.
+ */
 function colorByTypeRGBA(d: any): [number, number, number, number] {
   switch (getConnType(d)) {
     case "N": return [0, 128, 200, 220];
@@ -183,6 +252,10 @@ function colorByTypeRGBA(d: any): [number, number, number, number] {
     default:  return [128, 128, 128, 200];
   }
 }
+
+/**
+ * Get tilt value for a connection feature based on type.
+ */
 function tiltByType(d: any): number {
   switch (getConnType(d)) {
     case "N": return 5;
@@ -191,20 +264,40 @@ function tiltByType(d: any): number {
     default:  return 0;
   }
 }
+
+/**
+ * Get source coordinates for a connection feature.
+ */
 function getSourcePos(d: any): [number, number] {
   const src = getProp(d, "from")?.coordinates ?? getProp(d, "coordinates")?.[0];
   return src as [number, number];
 }
+
+/**
+ * Get target coordinates for a connection feature.
+ */
 function getTargetPos(d: any): [number, number] {
   const tgt = getProp(d, "to")?.coordinates ?? getProp(d, "coordinates")?.slice(-1)[0];
   return tgt as [number, number];
 }
+
+/**
+ * Return a darker shade of the given RGBA color.
+ */
 function darker([r, g, b, a]: [number, number, number, number]): [number, number, number, number] {
   return [Math.floor(r * 0.5), Math.floor(g * 0.5), Math.floor(b * 0.5), a ?? 255];
 }
+
+/**
+ * Format a number to a string with fixed decimal places.
+ */
 function fmt(n?: number, p = 5) {
   return typeof n === "number" ? n.toFixed(p) : "";
 }
+
+/**
+ * Extract longitude/latitude coordinates from a feature or geometry.
+ */
 function asLngLat(obj: any): [number, number] | null {
   if (obj?.geometry?.type === "Point") return obj.geometry.coordinates as [number, number];
   if (Array.isArray(obj?.coordinates))  return obj.coordinates as [number, number];
@@ -217,19 +310,29 @@ type ConnType = "N" | "C" | "HF";
 const ALL_TYPES: ConnType[] = ["N", "C", "HF"];
 let activeTypes = new Set<ConnType>(["HF"]);
 
-const HUB_LNG  = -82.492696;
-const HUB_LAT  = 27.8602;
-const HUB_EPS  = 1e-6;
+// Hub coordinates
+const HUB_LNG   = -82.492696;
+const HUB_LAT   = 27.8602;
+const HUB_EPS   = 1e-6;
 let hideHubConnections = false;
 
 const HUB2_LNG = 9.077841;
 const HUB2_LAT = 48.734481;
 let hideHub2Connections = false;
 let showIcons = true;
+// State to control persistent labels
+let showPinLabels = false;
 
+/**
+ * Helper for proximity comparison.
+ */
 function near(a: number, b: number, eps = HUB_EPS) {
   return Math.abs(a - b) <= eps;
 }
+
+/**
+ * Return true if a connection touches HUB 1 coordinates.
+ */
 function connectsToHub(d: any): boolean {
   const s = getSourcePos(d);
   const t = getTargetPos(d);
@@ -239,6 +342,10 @@ function connectsToHub(d: any): boolean {
   return (near(slng, HUB_LNG) && near(slat, HUB_LAT)) ||
          (near(tlng, HUB_LNG) && near(tlat, HUB_LAT));
 }
+
+/**
+ * Return true if a connection touches HUB 2 coordinates.
+ */
 function connectsToHub2(d: any): boolean {
   const s = getSourcePos(d);
   const t = getTargetPos(d);
@@ -252,6 +359,9 @@ function connectsToHub2(d: any): boolean {
 let overlay: any;
 const dataFilterExt = new deck.DataFilterExtension({ filterSize: 1 });
 
+/**
+ * Generate a key representing the current filter state for Deck.gl update triggers.
+ */
 function filterKey() {
   return [
     Array.from(activeTypes).sort().join(","),
@@ -263,10 +373,14 @@ function filterKey() {
 
 // ---------------------- Build Layers ----------------------
 
-function buildLayers() {
+/**
+ * Build and return all Deck.gl layers for the overlay.
+ */
+function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) {
+  // Connection arcs
   const connectionsLayer = new ArcLayer({
     id: "flights",
-    data: connections,
+    data: connectionsData,
     getSourcePosition: (d: any) => getSourcePos(d),
     getTargetPosition: (d: any) => getTargetPos(d),
     getSourceColor: (d: any) => colorByTypeRGBA(d),
@@ -276,19 +390,19 @@ function buildLayers() {
     pickable: true,
     getFilterValue: (d: any) =>
       (
-        activeTypes.has(getConnType(d) as ConnType) &&
-        (!hideHubConnections  || !connectsToHub(d))  &&
-        (!hideHub2Connections || !connectsToHub2(d))
+        activeTypes.has(d._connType) &&
+        (!hideHubConnections  || !d._isHub1)  &&
+        (!hideHub2Connections || !d._isHub2)
       ) ? 1 : 0,
     filterRange: [1, 1],
     extensions: [dataFilterExt],
     updateTriggers: { getFilterValue: filterKey() }
   });
 
+  // Pin scatterplot
   const pinsLayer = new ScatterplotLayer({
     id: "pins",
-    data: points,
-    dataTransform: (d: any) => (d && d.type === "FeatureCollection" ? d.features : d),
+    data: pinsData,
     pickable: true,
     autoHighlight: true,
     getPosition: (d: any) => d.geometry.coordinates,
@@ -299,16 +413,16 @@ function buildLayers() {
     stroked: true,
     getLineColor: [0, 0, 0, 200],
     lineWidthMinPixels: 1,
-    getFilterValue: (d: any) => (activePointTypes.has(getPinkType(d)) && !d.properties.icon) ? 1 : 0,
+    getFilterValue: (d: any) => activePointTypes.has(d._pinType) ? 1 : 0,
     filterRange: [1, 1],
     extensions: [dataFilterExt],
     updateTriggers: { getFilterValue: filterKey() }
   });
 
+  // Icon layer for aircraft/boat/truck/trailer pins
   const icons = new deck.IconLayer({
     id: 'aircraft-icon',
-    data: points,
-    dataTransform: (d: any) => (d && d.type === "FeatureCollection" ? d.features.filter((f: any) => f.properties.icon) : d),
+    data: iconsData,
     pickable: true,
     sizeUnits: 'pixels',
     getSize: () => 50,
@@ -353,224 +467,197 @@ function buildLayers() {
     }
   });
 
-  return [connectionsLayer, pinsLayer, icons];
+
+  // TextLayer for persistent labels
+  const textLayer = new TextLayer({
+    id: 'pin-labels',
+    // Only display if showPinLabels is true
+    data: showPinLabels ? [...pinsData, ...iconsData] : [], 
+    pickable: false,
+    getPosition: (d: any) => d.geometry.coordinates,
+    // Includes coordinates on a new line
+    getText: (d: any) => {
+        const name = d.properties?.name || '';
+        const [lng, lat] = asLngLat(d) ?? []; 
+        // Create a multi-line string for name, lat, and lng
+        // Using fmt(coord, 4) to limit decimal places for concise display
+        return `${name}\nLat: ${fmt(lat, 4)}\nLng: ${fmt(lng, 4)}`;
+    },
+    getColor: [255, 255, 255, 255],
+    getSize: 12,
+    getPixelOffset: [0, 20], // Offset to appear above/below the pin/icon
+    getFilterValue: (d: any) => activePointTypes.has(d._pinType) ? 1 : 0,
+    filterRange: [1, 1],
+    extensions: [dataFilterExt],
+    updateTriggers: { getFilterValue: filterKey() },
+    background: true,
+    getBackgroundColor: [0, 0, 0, 200], // Dark background for better multi-line readability
+    padding: [4, 6], // Increased padding for multi-line text
+    getAlignmentBaseline: 'top', 
+    getTextAnchor: 'middle',
+    
+    getZLevel: 0, 
+    parameters: {
+      depthTest: true, 
+      depthMask: true  
+    }
+  });
+
+  // TextLayer should be listed last
+  return [connectionsLayer, pinsLayer, icons, textLayer];
 }
 
 // ---------------------- UI: Legend and Controls ----------------------
 
-function addMultiFilterControls(onChange: () => void) {
-  // --- Main window that holds the two panels ---
-  const mainContainer = document.createElement("div");
-  mainContainer.id = "controls-container";
-  mainContainer.style.cssText = `
-    position:absolute; z-index:5; top:50px; left:10px;
-    font: 13px system-ui, sans-serif;
-    display:flex; flex-direction:column; gap:10px;
-    max-width: 320px;
-  `;
-
-  const makeLegendBox = () => {
-    const box = document.createElement("div");
-    box.style.cssText = `
-      background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,.15);
-      padding:8px 10px; display:flex; flex-direction:column; gap:10px;
-    `;
-    return box;
-  };
-
-  const makeBtn = (txt: string, handler: () => void) => {
-    const b = document.createElement("button");
-    b.textContent = txt;
-    b.style.cssText = `
-      padding:6px 10px; border:1px solid #ccc; border-radius:6px;
-      background:#f7f7f7; cursor:pointer;
-    `;
-    b.onclick = handler;
-    return b;
-  };
-
-  // --- Connections Panel ---
-  const connectionsLegend = makeLegendBox();
-
-  const connHeader = document.createElement("h2");
-  connHeader.textContent = "Connections";
-  connHeader.style.cssText = `font-size:16px; margin:0;`;
-  connectionsLegend.appendChild(connHeader);
-
-  // Buttons section
-  const connectionsButtonSection = document.createElement("div");
-  connectionsButtonSection.style.cssText = `display:flex; flex-wrap:wrap; gap:8px;`;
-
-  const allConnBtn = makeBtn("All / None", () => {
-    const ALL_TYPES: ConnType[] = ["N", "C", "HF"];
-    const isAllActive = activeTypes.size === ALL_TYPES.length;
-    activeTypes.clear();
-    if (!isAllActive) ALL_TYPES.forEach(t => activeTypes.add(t));
-    connCheckboxes.forEach(cb => cb.checked = !isAllActive);
-    onChange();
-  });
-  connectionsButtonSection.appendChild(allConnBtn);
-
-  // Hub toggles
-  const hub1Wrap = document.createElement("label");
-  hub1Wrap.style.cssText = `display:flex; align-items:center; gap:6px;`;
-  const hub1Cb = document.createElement("input");
-  hub1Cb.type = "checkbox";
-  hub1Cb.checked = hideHubConnections;
-  hub1Cb.onchange = () => { hideHubConnections = hub1Cb.checked; onChange(); };
-  const hub1Txt = document.createElement("span");
-  hub1Txt.textContent = "Hide connections to/from FL";
-  hub1Wrap.appendChild(hub1Cb); hub1Wrap.appendChild(hub1Txt);
-
-  const hub2Wrap = document.createElement("label");
-  hub2Wrap.style.cssText = `display:flex; align-items:center; gap:6px;`;
-  const hub2Cb = document.createElement("input");
-  hub2Cb.type = "checkbox";
-  hub2Cb.checked = hideHub2Connections;
-  hub2Cb.onchange = () => { hideHub2Connections = hub2Cb.checked; onChange(); };
-  const hub2Txt = document.createElement("span");
-  hub2Txt.textContent = "Hide connections to/from EU";
-  hub2Wrap.appendChild(hub2Cb); hub2Wrap.appendChild(hub2Txt);
-
-  connectionsButtonSection.appendChild(hub1Wrap);
-  connectionsButtonSection.appendChild(hub2Wrap);
-
-  connectionsLegend.appendChild(connectionsButtonSection);
-
-  // Connection type checkboxes
-  const connCheckboxes: HTMLInputElement[] = [];
+/**
+ * Add UI panels for multi-filter controls (connections and pins).
+ */
+function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
   const connItems: { key: ConnType; label: string; color: string }[] = [
-    { key: "N",  label: "N",  color: "rgb(0,128,200)" },
-    { key: "C",  label: "C",  color: "rgb(0,200,0)" },
+    { key: "N",   label: "N",   color: "rgb(0,128,200)" },
+    { key: "C",   label: "C",   color: "rgb(0,200,0)" },
     { key: "HF", label: "HF", color: "rgb(200,0,0)" }
   ];
-  connItems.forEach(({ key, label, color }) => {
-    const wrap = document.createElement("label");
-    wrap.style.cssText = `display:flex; align-items:center; gap:6px;`;
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.checked = activeTypes.has(key);
-    cb.onchange = () => {
-      if (cb.checked) activeTypes.add(key);
-      else activeTypes.delete(key);
-      onChange();
-    };
-    connCheckboxes.push(cb);
-    const swatch = document.createElement("span");
-    swatch.style.cssText = `
-      display:inline-block; width:10px; height:10px; background:${color};
-      border-radius:2px; border:1px solid rgba(0,0,0,.2);
-    `;
-    const text = document.createElement("span");
-    text.textContent = label;
-    wrap.appendChild(cb);
-    wrap.appendChild(swatch);
-    wrap.appendChild(text);
-    connectionsLegend.appendChild(wrap);
+  const pinItems: { key: PointType; label: string; color: string }[] = [
+    { key: "PINK_GROUP",      label: "F",   color: "rgb(255, 105, 180)" },
+    { key: "VIOLET_GROUP",      label: "SB", color: "rgb(130, 42, 245)" },
+    { key: "RED_GROUP",     label: "P",   color: "rgb(200, 0, 0)" },
+    { key: "TURQUOISE_GROUP", label: "D",   color: "rgb(64, 224, 208)" },
+    { key: "YELLOW_GROUP",      label: "G",   color: "rgb(255, 255, 0)" },
+    { key: "GREEN_GROUP",       label: "M",   color: "rgb(0, 128, 0)" },
+    { key: "PURPLE_GROUP",      label: "T",   color: "rgb(128, 0, 128)" },
+    { key: "ORANGE_GROUP",      label: "B",   color: "rgb(255, 165, 0)" },
+    { key: "BLUE_GROUP",      label: "S",   color: "rgb(0, 120, 255)" },
+    { key: "WHITE_GROUP",       label: "W",   color: "rgb(197, 110, 255)" }
+  ];
+
+  const controlsContainer = document.createElement('div');
+  controlsContainer.innerHTML = `
+    <button id="filters-toggle" title="Show/Hide filters" style="position: absolute; z-index: 10; top: 10px; left: 190px; padding:8px 10px; border:1px solid #ccc; border-radius:8px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.15); font: 13px system-ui, sans-serif; cursor:pointer;">Filters</button>
+    <div id="controls-container" style="position:absolute; z-index:5; top:50px; left:10px; font: 13px system-ui, sans-serif; display:flex; flex-direction:column; gap:10px; max-width: 320px;">
+      
+      <div class="legend-box">
+        <h2 style="font-size:16px; margin:0;">Connections</h2>
+        <div class="button-section">
+          <button id="all-conn-btn">All / None</button>
+          <label><input type="checkbox" id="hub1-cb" ${hideHubConnections ? 'checked' : ''}> Hide connections to/from FL</label>
+          <label><input type="checkbox" id="hub2-cb" ${hideHub2Connections ? 'checked' : ''}> Hide connections to/from EU</label>
+        </div>
+        ${connItems.map(({ key, label, color }) => `
+          <label>
+            <input type="checkbox" class="conn-cb" data-key="${key}" ${activeTypes.has(key) ? 'checked' : ''}>
+            <span class="swatch" style="background:${color};"></span>
+            ${label}
+          </label>
+        `).join('')}
+      </div>
+      <div class="legend-box">
+        <h2 style="font-size:16px; margin:0;">Pins</h2>
+        <div class="button-section">
+          <button id="all-pins-btn">All / None</button>
+          <label><input type="checkbox" id="icon-toggle-cb" ${showIcons ? 'checked' : ''}> Show Icons</label>
+          <button id="tooltip-btn">${showPinLabels ? 'Hide Labels' : 'Show Labels'}</button>
+        </div>
+        ${pinItems.map(({ key, label, color }) => `
+          <label>
+            <input type="checkbox" class="pin-cb" data-key="${key}" ${activePointTypes.has(key) ? 'checked' : ''}>
+            <span class="swatch" style="background:${color};"></span>
+            ${label}
+          </label>
+        `).join('')}
+      </div>
+    </div>
+    <style>
+      .legend-box { background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,.15); padding:8px 10px; display:flex; flex-direction:column; gap:10px; }
+      .legend-box label { display:flex; align-items:center; gap:6px; }
+      .button-section { 
+        display:flex; 
+        flex-wrap:wrap; 
+        gap:8px; 
+        padding: 5px 0; /* Add padding to separate from other sections */
+      }
+      .button-section button { 
+        padding:6px 10px; 
+        border:1px solid #ccc; 
+        border-radius:6px; 
+        background:#f7f7f7; 
+        cursor:pointer; 
+        flex-grow: 1; /* Make buttons expand nicely */
+      }
+      .swatch { display:inline-block; width:10px; height:10px; border-radius:2px; border:1px solid rgba(0,0,0,.2); }
+    </style>
+  `;
+  document.body.appendChild(controlsContainer);
+
+  // --- Attach Event Listeners ---
+  document.getElementById('filters-toggle')?.addEventListener('click', () => {
+    const container = document.getElementById('controls-container');
+    if (container) toggleDisplay(container);
   });
-
-  // --- Pins Panel ---
-  const pinsLegend = makeLegendBox();
-
-  const pinsHeader = document.createElement("h2");
-  pinsHeader.textContent = "Pins";
-  pinsHeader.style.cssText = `font-size:16px; margin:0;`;
-  pinsLegend.appendChild(pinsHeader);
-
-  const pinsButtonSection = document.createElement("div");
-  pinsButtonSection.style.cssText = `display:flex; flex-wrap:wrap; gap:8px;`;
-
-  const allPinsBtn = makeBtn("All / None", () => {
-    const ALL = PinLogic.ALL_POINT_TYPES;
-    const isAllActive = activePointTypes.size === ALL.length;
-    activePointTypes.clear();
-    if (!isAllActive) ALL.forEach(t => activePointTypes.add(t));
-    pinCheckboxes.forEach(cb => cb.checked = !isAllActive);
+  
+  // MAP LABELS BUTTON LISTENER REMOVED HERE
+  
+  document.getElementById('all-conn-btn')?.addEventListener('click', () => {
+    const isAllActive = activeTypes.size === connItems.length;
+    activeTypes.clear();
+    if (!isAllActive) connItems.forEach(item => activeTypes.add(item.key));
+    document.querySelectorAll<HTMLInputElement>('.conn-cb').forEach(cb => cb.checked = !isAllActive);
     onChange();
   });
-  pinsButtonSection.appendChild(allPinsBtn);
 
-  // Icon toggle
-  const iconToggleWrap = document.createElement("label");
-  iconToggleWrap.style.cssText = `display:flex; align-items:center; gap:6px;`;
-  const iconToggleCb = document.createElement("input");
-  iconToggleCb.type = "checkbox";
-  iconToggleCb.checked = showIcons;
-  iconToggleCb.onchange = () => { showIcons = iconToggleCb.checked; onChange(); };
-  const iconToggleTxt = document.createElement("span");
-  iconToggleTxt.textContent = "Show Icons";
-  iconToggleWrap.appendChild(iconToggleCb); iconToggleWrap.appendChild(iconToggleTxt);
-  pinsButtonSection.appendChild(iconToggleWrap);
-  pinsLegend.appendChild(pinsButtonSection);
-
-  const pinCheckboxes: HTMLInputElement[] = [];
-  const pinItems: { key: PointType; label: string; color: string }[] = [
-    { key: "PINK_GROUP",      label: "F",  color: "rgb(255, 105, 180)" },
-    { key: "VIOLET_GROUP",    label: "SB", color: "rgb(130, 42, 245)" },
-    { key: "RED_GROUP",       label: "P",  color: "rgb(200, 0, 0)" },
-    { key: "TURQUOISE_GROUP", label: "D",  color: "rgb(64, 224, 208)" },
-    { key: "YELLOW_GROUP",    label: "G",  color: "rgb(255, 255, 0)" },
-    { key: "GREEN_GROUP",     label: "M",  color: "rgb(0, 128, 0)" },
-    { key: "PURPLE_GROUP",    label: "T",  color: "rgb(128, 0, 128)" },
-    { key: "ORANGE_GROUP",    label: "B",  color: "rgb(255, 165, 0)" },
-    { key: "BLUE_GROUP",      label: "S",  color: "rgb(0, 120, 255)" },
-    { key: "WHITE_GROUP",     label: "W",  color: "rgb(197, 110, 255)" }
-  ];
-  pinItems.forEach(({ key, label, color }) => {
-    const wrap = document.createElement("label");
-    wrap.style.cssText = `display:flex; align-items:center; gap:6px;`;
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.checked = activePointTypes.has(key);
-    cb.onchange = () => {
-      if (cb.checked) activePointTypes.add(key);
-      else activePointTypes.delete(key);
-      onChange();
-    };
-    pinCheckboxes.push(cb);
-    const swatch = document.createElement("span");
-    swatch.style.cssText = `
-      display:inline-block; width:10px; height:10px; background:${color};
-      border-radius:2px; border:1px solid rgba(0,0,0,.2);
-    `;
-    const text = document.createElement("span");
-    text.textContent = label;
-    wrap.appendChild(cb);
-    wrap.appendChild(swatch);
-    wrap.appendChild(text);
-    pinsLegend.appendChild(wrap);
+  document.getElementById('hub1-cb')?.addEventListener('change', (e) => {
+    hideHubConnections = (e.target as HTMLInputElement).checked;
+    onChange();
   });
 
-  // Mount panels
-  mainContainer.appendChild(connectionsLegend);
-  mainContainer.appendChild(pinsLegend);
+  document.getElementById('hub2-cb')?.addEventListener('change', (e) => {
+    hideHub2Connections = (e.target as HTMLInputElement).checked;
+    onChange();
+  });
 
-  document.body.appendChild(mainContainer);
+  document.querySelectorAll<HTMLInputElement>('.conn-cb').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const key = cb.dataset.key as ConnType;
+      if (cb.checked) activeTypes.add(key); else activeTypes.delete(key);
+      onChange();
+    });
+  });
 
-  // --- Floating button to show/hide the whole filters window ---
-  const floatingBtn = document.createElement("button");
-  floatingBtn.id = "filters-toggle";
-  floatingBtn.textContent = "Filters";
-  floatingBtn.title = "Show/Hide filters";
-  floatingBtn.style.cssText = `
-    position: absolute;
-    z-index: 10;
-    top: 10px;
-    left: 190px;
-    padding:8px 10px; border:1px solid #ccc; border-radius:8px;
-    background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.15);
-    font: 13px system-ui, sans-serif; cursor:pointer;
-  `;
+  document.getElementById('all-pins-btn')?.addEventListener('click', () => {
+    const isAllActive = activePointTypes.size === pinItems.length;
+    activePointTypes.clear();
+    if (!isAllActive) pinItems.forEach(item => activePointTypes.add(item.key));
+    document.querySelectorAll<HTMLInputElement>('.pin-cb').forEach(cb => cb.checked = !isAllActive);
+    onChange();
+  });
 
-  document.body.appendChild(floatingBtn);
+  document.getElementById('icon-toggle-cb')?.addEventListener('change', (e) => {
+    showIcons = (e.target as HTMLInputElement).checked;
+    onChange();
+  });
 
-  floatingBtn.onclick = () => {
-    toggleDisplay(mainContainer);
-  };
+  // Logic for the "Show Labels" button to toggle the persistent TextLayer
+  document.getElementById('tooltip-btn')?.addEventListener('click', (e) => {
+    showPinLabels = !showPinLabels;
+    (e.target as HTMLButtonElement).textContent = showPinLabels ? 'Hide Labels' : 'Show Labels';
+    // Force layer update to show/hide the TextLayer
+    onChange();
+  });
+
+  document.querySelectorAll<HTMLInputElement>('.pin-cb').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const key = cb.dataset.key as PointType;
+      if (cb.checked) activePointTypes.add(key); else activePointTypes.delete(key);
+      onChange();
+    });
+  });
 }
 
 // ---------------------- Clicked Coordinates Display ----------------------
 
+/**
+ * Add UI panel to display coordinates of last map click.
+ */
 function addCoordinatesUI() {
   const coordsContainer = document.createElement("div");
   coordsContainer.id = "coords-container";
@@ -609,6 +696,9 @@ function addCoordinatesUI() {
   document.body.appendChild(coordsContainer);
 }
 
+/**
+ * Update displayed map click coordinates in the UI.
+ */
 function updateCoordinatesUI(lat: number | null, lng: number | null) {
   const latEl = document.getElementById("lat-display");
   const lngEl = document.getElementById("lng-display");
@@ -618,46 +708,86 @@ function updateCoordinatesUI(lat: number | null, lng: number | null) {
   }
 }
 
+// ---------------------- Data Pre-processing ----------------------
+
+/**
+ * Fetches and pre-processes data to optimize rendering.
+ * This computes values once on load rather than on every render.
+ */
+async function preprocessData() {
+  const [connectionsJson, pointsJson] = await Promise.all([
+    fetch(CONNECTIONS_DATA_URL).then(res => res.json()),
+    fetch(POINTS_DATA_URL).then(res => res.json())
+  ]);
+
+  // Pre-process connections
+  processedConnections = connectionsJson.map((c: any) => ({
+    ...c,
+    _connType: getConnType(c),
+    _isHub1: connectsToHub(c),
+    _isHub2: connectsToHub2(c),
+  }));
+
+  // Pre-process and split points into pins and icons
+  const allPoints = (pointsJson?.type === "FeatureCollection" ? pointsJson.features : pointsJson);
+  processedPins = [];
+  processedIcons = [];
+  allPoints.forEach((p: any) => {
+    p._pinType = getPinType(p); // Pre-calculate pin type for all points
+    if (p.properties?.icon) {
+      processedIcons.push(p);
+    } else {
+      processedPins.push(p);
+    }
+  });
+}
+
 // ---------------------- Initialization ----------------------
 
-function initMap(): void {
-   const map = new google.maps.Map(
+/**
+ * Initialize Google Map, Deck.gl overlay, controls, and event listeners.
+ */
+async function initMap(): Promise<void> {
+    const map = new google.maps.Map(
     document.getElementById("map") as HTMLElement,
     {
       center: { lat: 39.5, lng: -98.35 },
       zoom: 4,
       tilt: 30,
-      mapId: "90f87356969d889c", // you can keep or remove this if not needed
-      styles: [
-        { featureType: "all", elementType: "labels", stylers: [{ visibility: "off" }] },
-        { featureType: "road", elementType: "all", stylers: [{ visibility: "off" }] },
-        { featureType: "poi", elementType: "all", stylers: [{ visibility: "off" }] },
-        { featureType: "administrative", elementType: "all", stylers: [{ visibility: "on" }] },
-        { featureType: "transit", elementType: "all", stylers: [{ visibility: "off" }] },
-        { featureType: "water", elementType: "labels", stylers: [{ visibility: "off" }] },
-        { featureType: "landscape", elementType: "labels", stylers: [{ visibility: "off" }] }
-      ]
+      mapId: "90f87356969d889c",
+      // Cursor logic
+      draggableCursor: 'default', 
+      draggingCursor: 'grabbing', 
+      // PERMANENTLY apply the style to hide native labels
+      styles: PERMANENT_HIDE_LABELS_STYLE 
     }
   );
 
+  // Fetch and process data before rendering layers
+  await preprocessData();
+
   addCoordinatesUI();
 
-  addMultiFilterControls(() => {
-    overlay.setProps({ layers: buildLayers() });
+  // Pass the map object to the controls function to allow style modification
+  addMultiFilterControls(map, () => {
+    overlay.setProps({ layers: buildLayers(processedConnections, processedPins, processedIcons) });
   });
 
   map.addListener("click", (e: google.maps.MapMouseEvent) => {
     const ll = e.latLng;
     if (ll) updateCoordinatesUI(ll.lat(), ll.lng());
   });
-
+  
   overlay = new GoogleMapsOverlay({
-    layers: buildLayers(),
-    force: 'webgl',
+    layers: buildLayers(processedConnections, processedPins, processedIcons),
+    
+    // getTooltip remains for hover-based tooltips on pins and connections
     getTooltip: ({ object, layer }) => {
       if (!object) return null;
-      if (layer?.id === 'aircraft-icon') {
-        const name = object?.properties?.name ?? "Icon";
+      
+      // Tooltips for pins and icons (these are the hover tooltips)
+      if (layer?.id === 'aircraft-icon' || layer?.id === "pins") {
+        const name = object?.properties?.name ?? (layer?.id === "pins" ? "Pin" : "Icon");
         const [lng, lat] = asLngLat(object) ?? [];
         return {
           html: `
@@ -669,30 +799,19 @@ function initMap(): void {
           `
         };
       }
-      if (layer?.id === "pins") {
-        const name = object?.properties?.name ?? "Pin";
-        const [lng, lat] = asLngLat(object) ?? [];
-        return {
-          html: `
-            <div style="font-family:system-ui; font-size:12px; line-height:1.35; color:white">
-              <div><b>${name}</b></div>
-              <div><b>Lat</b>: ${fmt(lat)}</div>
-              <div><b>Lng</b>: ${fmt(lng)}</div>
-            </div>
-          `
-        };
-      }
+      
+      // Tooltips for connections
       const fromObj = object?.from ?? object?.properties?.from;
       const toObj   = object?.to   ?? object?.properties?.to;
       const fromName = fromObj?.name ?? "From";
       const toName   = toObj?.name   ?? "To";
       const connType = getConnType(object);
       const fromTech = fromObj?.tech ?? fromObj?.properties?.tech;
-      const toTech   = toObj?.tech   ?? toObj?.properties?.tech;
+      const toTech   = toObj?.tech   ?? toObj?.properties?.properties?.tech;
       const from = fromObj?.coordinates;
       const to   = toObj?.coordinates;
       const [flng, flat] = Array.isArray(from) ? from : [];
-      const [tlng, tlat] = Array.isArray(to)   ? to   : [];
+      const [tlng, tlat] = Array.isArray(to)  ? to   : [];
       return {
         html: `
           <div style="font-family:system-ui; font-size:12px; line-height:1.35; color: white">
@@ -702,7 +821,6 @@ function initMap(): void {
             </div>
             <div><b>${fromName}</b> <span style="opacity:1;">(${fromTech})</span></div>
             <div><b>${toName}</b> &nbsp;&nbsp;<span style="opacity:1;">(${toTech})</span></div>
-          </div>
           </div>
         `
       };

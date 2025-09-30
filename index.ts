@@ -190,7 +190,7 @@ const PinLogic = {
     "M": "GREEN_GROUP",
 
     // RED_GROUP
-    "HUB": "RED_GROUP",
+    "Hub": "RED_GROUP",
 
     // TURQUOISE_GROUP
     "PENT": "TURQUOISE_GROUP",
@@ -412,8 +412,8 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
     autoHighlight: true,
     getPosition: (d: any) => d.geometry.coordinates,
     radiusUnits: "pixels",
-    radiusMinPixels: 8,
-    radiusMaxPixels: 11,
+    radiusMinPixels: 15,
+    radiusMaxPixels: 15,
     getFillColor: (d: any) => colorPinkByType(d),
     stroked: true,
     getLineColor: [0, 0, 0, 200],

@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  * Google Maps + Deck.gl integration:
- *  - Connection type filters (N/C/H)
- *  - Pin group filters
- *  - Toggles to hide connections that touch specific coordinates (-82.492696, 27.8602) and (9.077841, 48.73448)
+ * - Connection type filters (N/C/H)
+ * - Pin group filters
+ * - Toggles to hide connections that touch specific coordinates (-82.492696, 27.8602) and (9.077841, 48.73448)
  */
 
 // Tell TypeScript that 'deck' is a global object, loaded via a script tag.
@@ -153,11 +153,11 @@ const PinLogic = {
 
     // TURQUOISE_GROUP
     "PENT": "TURQUOISE_GROUP",
-    "COS":  "TURQUOISE_GROUP",
-    "TB":   "TURQUOISE_GROUP",
-    "RR":   "TURQUOISE_GROUP",
-    "AZ":   "TURQUOISE_GROUP",
-    "IP":   "TURQUOISE_GROUP",
+    "COS": 	"TURQUOISE_GROUP",
+    "TB": 	"TURQUOISE_GROUP",
+    "RR": 	"TURQUOISE_GROUP",
+    "AZ": 	"TURQUOISE_GROUP",
+    "IP": 	"TURQUOISE_GROUP",
 
     // PINK_GROUP
     "SAN": "PINK_GROUP",
@@ -208,7 +208,7 @@ function colorByTypeRGBA(d: any): [number, number, number, number] {
     case "N": return [0, 128, 200, 220];
     case "C": return [0, 200, 0, 220];
     case "HF": return [200, 0, 0, 220];
-    default:  return [128, 128, 128, 200];
+    default: 	return [128, 128, 128, 200];
   }
 }
 
@@ -220,7 +220,7 @@ function tiltByType(d: any): number {
     case "N": return 5;
     case "C": return 10;
     case "HF": return 0;
-    default:  return 0;
+    default: 	return 0;
   }
 }
 
@@ -259,7 +259,7 @@ function fmt(n?: number, p = 5) {
  */
 function asLngLat(obj: any): [number, number] | null {
   if (obj?.geometry?.type === "Point") return obj.geometry.coordinates as [number, number];
-  if (Array.isArray(obj?.coordinates))  return obj.coordinates as [number, number];
+  if (Array.isArray(obj?.coordinates)) 	return obj.coordinates as [number, number];
   return null;
 }
 
@@ -270,9 +270,9 @@ const ALL_TYPES: ConnType[] = ["N", "C", "HF"];
 let activeTypes = new Set<ConnType>(["HF"]);
 
 // Hub coordinates
-const HUB_LNG  = -82.492696;
-const HUB_LAT  = 27.8602;
-const HUB_EPS  = 1e-6;
+const HUB_LNG 	= -82.492696;
+const HUB_LAT 	= 27.8602;
+const HUB_EPS 	= 1e-6;
 let hideHubConnections = false;
 
 const HUB2_LNG = 9.077841;
@@ -348,7 +348,7 @@ function buildLayers() {
     getFilterValue: (d: any) =>
       (
         activeTypes.has(getConnType(d) as ConnType) &&
-        (!hideHubConnections  || !connectsToHub(d))  &&
+        (!hideHubConnections 	|| !connectsToHub(d)) 	&&
         (!hideHub2Connections || !connectsToHub2(d))
       ) ? 1 : 0,
     filterRange: [1, 1],
@@ -499,8 +499,8 @@ function addMultiFilterControls(onChange: () => void) {
   // Connection type checkboxes
   const connCheckboxes: HTMLInputElement[] = [];
   const connItems: { key: ConnType; label: string; color: string }[] = [
-    { key: "N",  label: "N",  color: "rgb(0,128,200)" },
-    { key: "C",  label: "C",  color: "rgb(0,200,0)" },
+    { key: "N", 	label: "N", 	color: "rgb(0,128,200)" },
+    { key: "C", 	label: "C", 	color: "rgb(0,200,0)" },
     { key: "HF", label: "HF", color: "rgb(200,0,0)" }
   ];
   connItems.forEach(({ key, label, color }) => {
@@ -566,16 +566,16 @@ function addMultiFilterControls(onChange: () => void) {
   // Pin group checkboxes
   const pinCheckboxes: HTMLInputElement[] = [];
   const pinItems: { key: PointType; label: string; color: string }[] = [
-    { key: "PINK_GROUP",      label: "F",  color: "rgb(255, 105, 180)" },
-    { key: "VIOLET_GROUP",    label: "SB", color: "rgb(130, 42, 245)" },
-    { key: "RED_GROUP",       label: "P",  color: "rgb(200, 0, 0)" },
-    { key: "TURQUOISE_GROUP", label: "D",  color: "rgb(64, 224, 208)" },
-    { key: "YELLOW_GROUP",    label: "G",  color: "rgb(255, 255, 0)" },
-    { key: "GREEN_GROUP",     label: "M",  color: "rgb(0, 128, 0)" },
-    { key: "PURPLE_GROUP",    label: "T",  color: "rgb(128, 0, 128)" },
-    { key: "ORANGE_GROUP",    label: "B",  color: "rgb(255, 165, 0)" },
-    { key: "BLUE_GROUP",      label: "S",  color: "rgb(0, 120, 255)" },
-    { key: "WHITE_GROUP",     label: "W",  color: "rgb(197, 110, 255)" }
+    { key: "PINK_GROUP", 	 	label: "F", 	color: "rgb(255, 105, 180)" },
+    { key: "VIOLET_GROUP", 		label: "SB", color: "rgb(130, 42, 245)" },
+    { key: "RED_GROUP", 	 	label: "P", 	color: "rgb(200, 0, 0)" },
+    { key: "TURQUOISE_GROUP", label: "D", 	color: "rgb(64, 224, 208)" },
+    { key: "YELLOW_GROUP", 		label: "G", 	color: "rgb(255, 255, 0)" },
+    { key: "GREEN_GROUP", 		label: "M", 	color: "rgb(0, 128, 0)" },
+    { key: "PURPLE_GROUP", 		label: "T", 	color: "rgb(128, 0, 128)" },
+    { key: "ORANGE_GROUP", 		label: "B", 	color: "rgb(255, 165, 0)" },
+    { key: "BLUE_GROUP", 		label: "S", 	color: "rgb(0, 120, 255)" },
+    { key: "WHITE_GROUP", 		label: "W", 	color: "rgb(197, 110, 255)" }
   ];
   pinItems.forEach(({ key, label, color }) => {
     const wrap = document.createElement("label");
@@ -691,13 +691,19 @@ function updateCoordinatesUI(lat: number | null, lng: number | null) {
  * Initialize Google Map, Deck.gl overlay, controls, and event listeners.
  */
 function initMap(): void {
-   const map = new google.maps.Map(
+    const map = new google.maps.Map(
     document.getElementById("map") as HTMLElement,
     {
       center: { lat: 39.5, lng: -98.35 },
       zoom: 4,
       tilt: 30,
       mapId: "90f87356969d889c",
+      // --- START: Requested Cursor Changes (Corrected) ---
+      // Set default cursor to an ARROW ('default') when the map is draggable
+      draggableCursor: 'default', 
+      // Set cursor to grasping ('grabbing') when the map is being dragged
+      draggingCursor: 'grabbing', 
+      // --- END: Requested Cursor Changes (Corrected) ---
       styles: [
         { featureType: "all", elementType: "labels", stylers: [{ visibility: "off" }] },
         { featureType: "road", elementType: "all", stylers: [{ visibility: "off" }] },
@@ -755,16 +761,16 @@ function initMap(): void {
       }
       // Tooltips for connections
       const fromObj = object?.from ?? object?.properties?.from;
-      const toObj   = object?.to   ?? object?.properties?.to;
+      const toObj 	= object?.to 	 ?? object?.properties?.to;
       const fromName = fromObj?.name ?? "From";
-      const toName   = toObj?.name   ?? "To";
+      const toName 	 = toObj?.name 	 ?? "To";
       const connType = getConnType(object);
       const fromTech = fromObj?.tech ?? fromObj?.properties?.tech;
-      const toTech   = toObj?.tech   ?? toObj?.properties?.tech;
+      const toTech 	 = toObj?.tech 	 ?? toObj?.properties?.tech;
       const from = fromObj?.coordinates;
-      const to   = toObj?.coordinates;
+      const to 	 = toObj?.coordinates;
       const [flng, flat] = Array.isArray(from) ? from : [];
-      const [tlng, tlat] = Array.isArray(to)   ? to   : [];
+      const [tlng, tlat] = Array.isArray(to) 	? to 	 : [];
       return {
         html: `
           <div style="font-family:system-ui; font-size:12px; line-height:1.35; color: white">

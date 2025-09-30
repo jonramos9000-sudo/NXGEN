@@ -985,12 +985,12 @@
     "inbound": 0,
     "outbound": 0,
     "from": {
-      "name": "From",
+      "name": "HUB",
       "coordinates": [-118.7242, 39.4204]
     },
     "to": {
-      "name": "To",
-      "coordinates": [-123.21009770947666, 39.48218080178868]
+      "name": "E6",
+      "coordinates": [-124.122174, 39.676226]
     },
     "Connection_type": "N"
   },
@@ -998,25 +998,12 @@
     "inbound": 0,
     "outbound": 0,
     "from": {
-      "name": "From",
+      "name": "HUB",
       "coordinates": [-118.7242, 39.4204]
     },
     "to": {
-      "name": "To",
+      "name": "Support Team",
       "coordinates": [-123.01213543607518, 39.19723610755426]
-    },
-    "Connection_type": "N"
-  },
-   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [-144.07825475976142,51.26563968767137]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [-149.811871, 61.252815]
     },
     "Connection_type": "N"
   },
@@ -1028,7 +1015,7 @@
       "coordinates": [-116.76929328740175, 39.655821031300874] 
     },
     "to": {
-      "name": "To",
+      "name": "HUB",
       "coordinates": [-118.7242, 39.4204]
     },
     "Connection_type": "N"
@@ -1046,7 +1033,7 @@
       "name": "nd",
       "coordinates": [-97.378979, 47.952266]
     },
-    "Connection_type": "H"
+    "Connection_type": "HF"
   },
    {
     "inbound": 0,
@@ -1060,7 +1047,7 @@
       "name": "NE",
       "coordinates": [-95.915086, 41.125063]
     },
-    "Connection_type": "H"
+    "Connection_type": "HF"
   },
   {
     "inbound": 0,
@@ -1073,7 +1060,7 @@
       "name": "NE",
       "coordinates": [-95.915086, 41.125063]
     },
-    "Connection_type": "H"
+    "Connection_type": "HF"
   },
    {
     "inbound": 0,
@@ -1086,7 +1073,7 @@
       "name": "e",
       "coordinates": [-149.811871, 61.252815]
     },
-    "Connection_type": "H"
+    "Connection_type": "HF"
   },
   {
     "inbound": 0,
@@ -1099,7 +1086,7 @@
       "name": "HI",
       "coordinates": [-157.76579, 21.45062]
     },
-    "Connection_type": "H"
+    "Connection_type": "HF"
   },
    {
     "inbound": 0,
@@ -1109,61 +1096,76 @@
       "coordinates": [-157.52838970090178, 45.266622232433164]
     },
     "to": {
-      "name": "beale",
+      "name": "Beale HFGCS",
       "coordinates": [-121.3599, 39.1115]
     },
-    "Connection_type": "H"
+    "Connection_type": "HF"
   },
   {
     "inbound": 0,
     "outbound": 0,
     "from": {
-      "name": "fallon",
+      "name": "HUB",
       "coordinates": [-118.7242, 39.4204]
     },
     "to": {
-      "name": "beale",
+      "name": "Beale HFGCS",
       "coordinates": [-121.3599, 39.1115]
     },
-    "Connection_type": "H"
+    "Connection_type": "HF"
   },
   {
     "inbound": 0,
     "outbound": 0,
     "from": {
-      "name": "t",
+      "name": "Support Team",
       "coordinates": [-123.01213543607518, 39.19723610755426]
     },
     "to": {
-      "name": "beale",
+      "name": "Beale HFGCS",
       "coordinates": [-121.3599, 39.1115]
     },
-    "Connection_type": "H"
+    "Connection_type": "HF"
   },
   {
     "inbound": 0,
     "outbound": 0,
     "from": {
-      "name": "p",
-      "coordinates": [-123.21009770947666, 39.48218080178868]
+      "name": "E6",
+      "coordinates": [-124.122174, 39.676226]
     },
     "to": {
-      "name": "beale",
+      "name": "Beale HFGCS",
       "coordinates": [-121.3599, 39.1115]
     },
-    "Connection_type": "H"
+    "Connection_type": "HF"
   },
   {
     "inbound": 0,
     "outbound": 0,
     "from": {
-      "name": "p",
-      "coordinates": [-123.21009770947666, 39.48218080178868]
+      "name": "E6",
+      "tech": "PRC-160",
+      "coordinates": [-124.122174, 39.676226]
     },
     "to": {
-      "name": "t",
+      "name": "Support Team",
+      "tech": "PRC-160+TRAX",
       "coordinates": [-123.01213543607518, 39.19723610755426]
     },
-    "Connection_type": "H"
+    "Connection_type": "HF"
+  },
+   {
+    "inbound": 0,
+    "outbound": 0,
+    "from": {
+      "name": "HUB",
+      "coordinates": [-118.7242, 39.4204]
+    },
+    "to": {
+      "name": "Support Team",
+      "coordinates": [-123.01213543607518, 39.19723610755426]
+    },
+    "Connection_type": "HF"
   }
 ]

@@ -535,7 +535,14 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
         getColor: [255, 255, 255, 255],
         getSize: 12,
         getPixelOffset: [0, 20], // Offset to appear below the pin/icon
-        getFilterValue: (d: any) => activePointTypes.has(d._pinType) ? 1 : 0,
+        getFilterValue: (d: any) => {
+            // If it's an icon, filter based on the showIcons flag.
+            if (d.properties?.icon) {
+                return showIcons ? 1 : 0;
+            }
+            // Otherwise, it's a pin, so filter based on its type.
+            return activePointTypes.has(d._pinType) ? 1 : 0;
+        },
         filterRange: [1, 1],
         extensions: [dataFilterExt],
         updateTriggers: { getFilterValue: filterKey() },

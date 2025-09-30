@@ -582,15 +582,17 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
 
     const controlsContainer = document.createElement('div');
     controlsContainer.innerHTML = `
-        <button id="filters-toggle" title="Show/Hide filters" style="position: absolute; z-index: 10; top: 10px; left: 190px; padding:8px 10px; border:1px solid #ccc; border-radius:8px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.15); font: 13px system-ui, sans-serif; cursor:pointer;">Filters</button>
-        <div id="controls-container" style="position:absolute; z-index:5; top:50px; left:10px; font: 13px system-ui, sans-serif; display:flex; flex-direction:column; gap:10px; max-width: 320px;">
+        <button id="filters-toggle" title="Show/Hide filters" style="position: absolute; z-index: 10; top: 12px; left: 190px; padding:8px 10px; border:1px solid #ccc; border-radius:8px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.15); font: 13px system-ui, sans-serif; cursor:pointer;">Filters</button>
+        <div id="controls-container" style="position:absolute; z-index:5; top:55px; left:10px; font: 13px system-ui, sans-serif; display:flex; flex-direction:column; gap:10px; max-width: 200px;">
             
-            <div class="legend-box">
+            <div id="connection-legend-box" class="legend-box">
                 <h2 style="font-size:16px; margin:0;">Connections</h2>
-                <div class="button-section">
+                <div id="conn-button-section" class="button-section">
                     <button id="all-conn-btn">All / None</button>
-                    <label><input type="checkbox" id="hub1-cb" ${hideHubConnections ? 'checked' : ''}> Hide connections to/from FL</label>
-                    <label><input type="checkbox" id="hub2-cb" ${hideHub2Connections ? 'checked' : ''}> Hide connections to/from EU</label>
+                    </div>
+                <div class="filter-toggles-section">
+                    <label><input type="checkbox" id="hub1-cb" ${hideHubConnections ? 'checked' : ''}> Hide FL</label>
+                    <label><input type="checkbox" id="hub2-cb" ${hideHub2Connections ? 'checked' : ''}> Hide EU</label>
                 </div>
                 ${connItems.map(({ key, label, color }) => `
                     <label>
@@ -604,7 +606,7 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
                 <h2 style="font-size:16px; margin:0;">Pins</h2>
                 <div class="button-section">
                     <button id="all-pins-btn">All / None</button>
-                    <label><input type="checkbox" id="icon-toggle-cb" ${showIcons ? 'checked' : ''}> Show Icons</label>
+                    <label style="flex-grow: 1;"><input type="checkbox" id="icon-toggle-cb" ${showIcons ? 'checked' : ''}> Show Icons</label>
                     <button id="tooltip-btn">${showPinLabels ? 'Hide Labels' : 'Show Labels'}</button>
                 </div>
                 ${pinItems.map(({ key, label, color }) => `
@@ -616,6 +618,8 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
                 `).join('')}
             </div>
         </div>
+        <div id="top-right-panel" style="position: absolute; z-index: 10; top: 10px; right: 10px;">
+            </div>
         <style>
             .legend-box { background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,.15); padding:8px 10px; display:flex; flex-direction:column; gap:10px; }
             .legend-box label { display:flex; align-items:center; gap:6px; }
@@ -623,7 +627,15 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
                 display:flex; 
                 flex-wrap:wrap; 
                 gap:8px; 
-                padding: 5px 0; /* Add padding to separate from other sections */
+                border-bottom: 1px solid #eee; 
+                padding-bottom: 8px;
+            }
+            .filter-toggles-section {
+                 display:flex; 
+                flex-wrap:wrap; 
+                gap:8px; 
+                border-bottom: 1px solid #eee;
+                padding-bottom: 8px;
             }
             .button-section button { 
                 padding:6px 10px; 
@@ -631,12 +643,25 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
                 border-radius:6px; 
                 background:#f7f7f7; 
                 cursor:pointer; 
-                flex-grow: 1; /* Make buttons expand nicely */
+                flex-grow: 1;
             }
-            .swatch { display:inline-block; width:10px; height:10px; border-radius:2px; border:1px solid rgba(0,0,0,.2); }
+            /* Decreased swatch size for smaller box */
+            .swatch { display:inline-block; width:8px; height:8px; border-radius:2px; border:1px solid rgba(0,0,0,.2); } 
         </style>
     `;
     document.body.appendChild(controlsContainer);
+
+    // --- NEW: Add the Connection Details Button to its new location ---
+    const connButtonSection = document.getElementById('conn-button-section');
+    const connLabelButton = document.createElement('button');
+    connLabelButton.id = 'toggle-conn-labels-btn';
+    connLabelButton.textContent = showConnectionLabels ? 'Hide Details' : 'Show Details';
+    connLabelButton.title = 'Toggle on-map connection details (Source/Target Names & Coords)';
+    if (connButtonSection) {
+        // Append the new button after the "All/None" button
+        connButtonSection.appendChild(connLabelButton);
+    }
+    // --- END NEW ---
 
     // --- Attach Event Listeners ---
     document.getElementById('filters-toggle')?.addEventListener('click', () => {
@@ -674,6 +699,15 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
             updateMap();
         });
     });
+    
+    // Listener for the new connection label button
+    connLabelButton.addEventListener('click', () => {
+        showConnectionLabels = !showConnectionLabels;
+        connLabelButton.textContent = showConnectionLabels ? 'Hide Details' : 'Show Details';
+        updateMap();
+    });
+    // --- END Connection Button Logic ---
+
 
     document.getElementById('all-pins-btn')?.addEventListener('click', () => {
         const isAllActive = activePointTypes.size === pinItems.length;
@@ -704,29 +738,14 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
     });
 }
 
-// ---------------------- Connection Label Button UI (MODIFIED) ----------------------
+// ---------------------- Connection Label Button UI (REMOVED: Now handled in addMultiFilterControls) ----------------------
 
 /**
  * Add the "Show Connection Types" button to the DOM and manage the connection TextLayer visibility.
  */
 function addConnectionsPanelUI(onChange: () => void) {
-    const container = document.createElement('div');
-    container.innerHTML = `
-        <button id="toggle-conn-labels-btn" 
-                style="position: absolute; z-index: 10; top: 10px; right: 10px; padding:8px 10px; border:1px solid #ccc; border-radius:8px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.15); font: 13px system-ui, sans-serif; cursor:pointer;">
-            ${showConnectionLabels ? 'Hide Connection Details' : 'Show Connection Details'}
-        </button>
-    `;
-    document.body.appendChild(container);
-
-    // Attach listener for the button
-    document.getElementById('toggle-conn-labels-btn')?.addEventListener('click', (e) => {
-        showConnectionLabels = !showConnectionLabels;
-        // Update the button text to reflect the detailed information now being shown
-        (e.target as HTMLButtonElement).textContent = showConnectionLabels ? 'Hide Connection Details' : 'Show Connection Details';
-        // Trigger map update to show/hide the Deck.gl connection TextLayer
-        onChange(); 
-    });
+    // This function is now empty as the button logic has been moved to addMultiFilterControls
+    // It remains as a placeholder to avoid breaking the calling structure in initMap
 }
 
 
@@ -738,8 +757,9 @@ function addConnectionsPanelUI(onChange: () => void) {
 function addCoordinatesUI() {
     const coordsContainer = document.createElement("div");
     coordsContainer.id = "coords-container";
+    // *** MODIFIED: Changed position from 'left: 10px;' to 'right: 10px;' ***
     coordsContainer.style.cssText = `
-        position: absolute; z-index: 5; bottom: 30px; left: 10px;
+        position: absolute; z-index: 5; bottom: 30px; right: 60px;
         background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.15);
         padding: 8px 10px;
         font: 13px system-ui, sans-serif;
@@ -850,10 +870,10 @@ async function initMap(): Promise<void> {
 
     // Add UI components
     addCoordinatesUI();
-    // Pass the layer update callback to the new connection button handler
+    // addConnectionsPanelUI is now a NO-OP, but keeps the calling structure
     addConnectionsPanelUI(layerUpdateCallback); 
 
-    // Pass the map object and update callback to the controls function
+    // Add multi-filter controls, which now includes the connection button logic
     addMultiFilterControls(map, layerUpdateCallback);
 
     map.addListener("click", (e: google.maps.MapMouseEvent) => {

@@ -582,8 +582,8 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
 
     const controlsContainer = document.createElement('div');
     controlsContainer.innerHTML = `
-        <button id="filters-toggle" title="Show/Hide filters" style="position: absolute; z-index: 10; top: 12px; left: 190px; padding:8px 10px; border:1px solid #ccc; border-radius:8px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.15); font: 13px system-ui, sans-serif; cursor:pointer;">Filters</button>
-        <div id="controls-container" style="position:absolute; z-index:5; top:55px; left:10px; font: 13px system-ui, sans-serif; display:flex; flex-direction:column; gap:10px; max-width: 200px;">
+        <button id="filters-toggle" title="Show/Hide filters" style="position: absolute; z-index: 10; top: 10px; left: 190px; padding:8px 10px; border:1px solid #ccc; border-radius:8px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.15); font: 13px system-ui, sans-serif; cursor:pointer;">Filters</button>
+        <div id="controls-container" style="position:absolute; z-index:5; top:50px; left:10px; font: 13px system-ui, sans-serif; display:flex; flex-direction:column; gap:10px; max-width: 200px;">
             
             <div id="connection-legend-box" class="legend-box">
                 <h2 style="font-size:16px; margin:0;">Connections</h2>
@@ -759,7 +759,7 @@ function addCoordinatesUI() {
     coordsContainer.id = "coords-container";
     // *** MODIFIED: Changed position from 'left: 10px;' to 'right: 10px;' ***
     coordsContainer.style.cssText = `
-        position: absolute; z-index: 5; bottom: 30px; right: 60px;
+        position: absolute; z-index: 5; bottom: 30px; right: 10px;
         background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.15);
         padding: 8px 10px;
         font: 13px system-ui, sans-serif;

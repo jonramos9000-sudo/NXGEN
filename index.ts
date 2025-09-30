@@ -22,7 +22,7 @@ const DataFilterExtension = deck.DataFilterExtension;
 const airplaneIcon = "database/icons/airplane.png";
 const boatIcon = "database/icons/a-large-navy-ship-silhouette-vector.png";
 const truckIcon = "database/icons/truck.png";
-const trailerIcon = "database/icons/trailer.png"
+const trailerIcon = "database/icons/trailer.png";
 
 const ICON_MAP = {
   airplane: airplaneIcon,
@@ -37,10 +37,11 @@ type Properties = { scalerank?: number; Connection_type?: string; from?: any; to
 type Feature = GeoJSON.Feature<GeoJSON.Geometry, Properties>;
 type Data = GeoJSON.FeatureCollection<GeoJSON.Geometry, Properties> | any[];
 
+// Data sources (can be strings representing file paths or already loaded datasets)
 const connections: string | Data = "database/connections_geojson_like.json";
 const points: string | Data = "database/points.json";
 
-//test icon pin
+// Example icon pin feature
 const feature = {
   type: "Feature",
   properties: { name: "E6" },
@@ -49,18 +50,33 @@ const feature = {
 
 // ---------------------- Helper Functions ----------------------
 
+/**
+ * Get a property value from a data object.
+ */
 function getProp(d: any, key: string): any {
   return d?.[key] ?? d?.properties?.[key] ?? d?.connectionType;
 }
+
+/**
+ * Extracts and normalizes the connection type from a feature.
+ */
 function getConnType(d: any): string {
   const t = getProp(d, "Connection_type") ?? getProp(d, "connection_type");
   const up = String(t ?? "").trim().toUpperCase();
   if (up === "N_TYPE") return "N";
   return up; // "N" | "C" | "HF" | (others)
 }
+
+/**
+ * Gets the name property from a point feature.
+ */
 function getPointName(d: any): string {
   return getProp(d, "name") ?? "";
 }
+
+/**
+ * Toggles the display property of a DOM element.
+ */
 function toggleDisplay(el: HTMLElement, force?: boolean) {
   const shouldShow = force !== undefined ? force : el.style.display === "none";
   el.style.display = shouldShow ? "flex" : "none";
@@ -80,6 +96,7 @@ type PointType =
   | "PINK_GROUP"
   | "WHITE_GROUP";
 
+// Logic for pin color/group lookups and mapping
 const PinLogic = {
   ALL_POINT_TYPES: [
     "RED_GROUP", "TURQUOISE_GROUP", "YELLOW_GROUP", "GREEN_GROUP",
@@ -96,7 +113,7 @@ const PinLogic = {
     BLUE_GROUP:      [0, 120, 255, 220],
     VIOLET_GROUP:    [130, 42, 245, 220],
     PINK_GROUP:      [255, 105, 180, 220],
-    WHITE_GROUP: [197, 110, 255, 220]
+    WHITE_GROUP:     [197, 110, 255, 220]
   } as Record<PointType, [number, number, number, number]>,
 
   PIN_LOOKUP_MAP: {
@@ -151,18 +168,29 @@ const PinLogic = {
   } as Record<string, PointType>,
 };
 
+// Set of active point types for filtering pins
 let activePointTypes = new Set<PointType>(PinLogic.ALL_POINT_TYPES);
 
+/**
+ * Gets the group for a pin based on its name.
+ */
 function getPinkType(d: any): PointType {
   const name = getPointName(d);
   return PinLogic.PIN_LOOKUP_MAP[name] ?? "BLUE_GROUP";
 }
+
+/**
+ * Gets the color for a pin based on its group type.
+ */
 function colorPinkByType(d: any): [number, number, number, number] {
   return PinLogic.PIN_COLOR_MAP[getPinkType(d)];
 }
 
 // ---------------------- Connection Styling ----------------------
 
+/**
+ * Gets the RGBA color for a connection based on type.
+ */
 function colorByTypeRGBA(d: any): [number, number, number, number] {
   switch (getConnType(d)) {
     case "N": return [0, 128, 200, 220];
@@ -171,6 +199,10 @@ function colorByTypeRGBA(d: any): [number, number, number, number] {
     default:  return [128, 128, 128, 200];
   }
 }
+
+/**
+ * Gets the tilt value for a connection based on type.
+ */
 function tiltByType(d: any): number {
   switch (getConnType(d)) {
     case "N": return 5;
@@ -179,20 +211,40 @@ function tiltByType(d: any): number {
     default:  return 0;
   }
 }
+
+/**
+ * Gets the source position (lng, lat) for a connection.
+ */
 function getSourcePos(d: any): [number, number] {
   const src = getProp(d, "from")?.coordinates ?? getProp(d, "coordinates")?.[0];
   return src as [number, number];
 }
+
+/**
+ * Gets the target position (lng, lat) for a connection.
+ */
 function getTargetPos(d: any): [number, number] {
   const tgt = getProp(d, "to")?.coordinates ?? getProp(d, "coordinates")?.slice(-1)[0];
   return tgt as [number, number];
 }
+
+/**
+ * Returns a darker version of an RGBA color.
+ */
 function darker([r, g, b, a]: [number, number, number, number]): [number, number, number, number] {
   return [Math.floor(r * 0.5), Math.floor(g * 0.5), Math.floor(b * 0.5), a ?? 255];
 }
+
+/**
+ * Formats a number to fixed decimal places.
+ */
 function fmt(n?: number, p = 5) {
   return typeof n === "number" ? n.toFixed(p) : "";
 }
+
+/**
+ * Returns coordinates from a GeoJSON-like object as [lng, lat].
+ */
 function asLngLat(obj: any): [number, number] | null {
   if (obj?.geometry?.type === "Point") return obj.geometry.coordinates as [number, number];
   if (Array.isArray(obj?.coordinates))  return obj.coordinates as [number, number];
@@ -205,6 +257,7 @@ type ConnType = "N" | "C" | "HF";
 const ALL_TYPES: ConnType[] = ["N", "C", "HF"];
 let activeTypes = new Set<ConnType>(["HF"]);
 
+// Hub coordinates for filtering connections
 const HUB_LNG  = -82.492696;
 const HUB_LAT  = 27.8602;
 const HUB_EPS  = 1e-6;
@@ -215,9 +268,16 @@ const HUB2_LAT = 48.734481;
 let hideHub2Connections = false;
 let showIcons = true;
 
+/**
+ * Checks if two coordinates are within a small epsilon.
+ */
 function near(a: number, b: number, eps = HUB_EPS) {
   return Math.abs(a - b) <= eps;
 }
+
+/**
+ * Returns true if a connection touches the first hub.
+ */
 function connectsToHub(d: any): boolean {
   const s = getSourcePos(d);
   const t = getTargetPos(d);
@@ -227,6 +287,10 @@ function connectsToHub(d: any): boolean {
   return (near(slng, HUB_LNG) && near(slat, HUB_LAT)) ||
          (near(tlng, HUB_LNG) && near(tlat, HUB_LAT));
 }
+
+/**
+ * Returns true if a connection touches the second hub.
+ */
 function connectsToHub2(d: any): boolean {
   const s = getSourcePos(d);
   const t = getTargetPos(d);
@@ -240,6 +304,9 @@ function connectsToHub2(d: any): boolean {
 let overlay: any;
 const dataFilterExt = new deck.DataFilterExtension({ filterSize: 1 });
 
+/**
+ * Returns a key string representing the current filter state.
+ */
 function filterKey() {
   return [
     Array.from(activeTypes).sort().join(","),
@@ -251,7 +318,11 @@ function filterKey() {
 
 // ---------------------- Build Layers ----------------------
 
+/**
+ * Builds and returns the Deck.gl layers used for visualization.
+ */
 function buildLayers() {
+  // Connections: ArcLayer for connection lines
   const connectionsLayer = new ArcLayer({
     id: "flights",
     data: connections,
@@ -273,6 +344,7 @@ function buildLayers() {
     updateTriggers: { getFilterValue: filterKey() }
   });
 
+  // Pins: ScatterplotLayer for map pins
   const pinsLayer = new ScatterplotLayer({
     id: "pins",
     data: points,
@@ -293,6 +365,7 @@ function buildLayers() {
     updateTriggers: { getFilterValue: filterKey() }
   });
 
+  // Icons: IconLayer for special point icons
   const icons = new deck.IconLayer({
     id: 'aircraft-icon',
     data: points,
@@ -323,13 +396,17 @@ function buildLayers() {
       depthMask: false
     }
   });
+
   return [connectionsLayer, pinsLayer, icons];
 }
 
 // ---------------------- UI: Legend and Controls ----------------------
 
+/**
+ * Adds filter controls for connections and pins to the DOM.
+ */
 function addMultiFilterControls(onChange: () => void) {
-  // --- Main window that holds the two panels ---
+  // Main window that holds the two panels
   const mainContainer = document.createElement("div");
   mainContainer.id = "controls-container";
   mainContainer.style.cssText = `
@@ -339,6 +416,7 @@ function addMultiFilterControls(onChange: () => void) {
     max-width: 320px;
   `;
 
+  // Helper to create a legend box
   const makeLegendBox = () => {
     const box = document.createElement("div");
     box.style.cssText = `
@@ -348,6 +426,7 @@ function addMultiFilterControls(onChange: () => void) {
     return box;
   };
 
+  // Helper to create a button
   const makeBtn = (txt: string, handler: () => void) => {
     const b = document.createElement("button");
     b.textContent = txt;
@@ -371,6 +450,7 @@ function addMultiFilterControls(onChange: () => void) {
   const connectionsButtonSection = document.createElement("div");
   connectionsButtonSection.style.cssText = `display:flex; flex-wrap:wrap; gap:8px;`;
 
+  // All/None button for connection types
   const allConnBtn = makeBtn("All / None", () => {
     const ALL_TYPES: ConnType[] = ["N", "C", "HF"];
     const isAllActive = activeTypes.size === ALL_TYPES.length;
@@ -450,6 +530,7 @@ function addMultiFilterControls(onChange: () => void) {
   const pinsButtonSection = document.createElement("div");
   pinsButtonSection.style.cssText = `display:flex; flex-wrap:wrap; gap:8px;`;
 
+  // All/None button for pin groups
   const allPinsBtn = makeBtn("All / None", () => {
     const ALL = PinLogic.ALL_POINT_TYPES;
     const isAllActive = activePointTypes.size === ALL.length;
@@ -473,6 +554,7 @@ function addMultiFilterControls(onChange: () => void) {
   pinsButtonSection.appendChild(iconToggleWrap);
   pinsLegend.appendChild(pinsButtonSection);
 
+  // Pin group checkboxes
   const pinCheckboxes: HTMLInputElement[] = [];
   const pinItems: { key: PointType; label: string; color: string }[] = [
     { key: "PINK_GROUP",      label: "F",  color: "rgb(255, 105, 180)" },
@@ -517,7 +599,7 @@ function addMultiFilterControls(onChange: () => void) {
 
   document.body.appendChild(mainContainer);
 
-  // --- Floating button to show/hide the whole filters window ---
+  // Floating button to show/hide the whole filters window
   const floatingBtn = document.createElement("button");
   floatingBtn.id = "filters-toggle";
   floatingBtn.textContent = "Filters";
@@ -541,6 +623,9 @@ function addMultiFilterControls(onChange: () => void) {
 
 // ---------------------- Clicked Coordinates Display ----------------------
 
+/**
+ * Adds UI to display clicked coordinates at the bottom of the map.
+ */
 function addCoordinatesUI() {
   const coordsContainer = document.createElement("div");
   coordsContainer.id = "coords-container";
@@ -579,6 +664,9 @@ function addCoordinatesUI() {
   document.body.appendChild(coordsContainer);
 }
 
+/**
+ * Updates the displayed coordinates in the UI.
+ */
 function updateCoordinatesUI(lat: number | null, lng: number | null) {
   const latEl = document.getElementById("lat-display");
   const lngEl = document.getElementById("lng-display");
@@ -590,19 +678,22 @@ function updateCoordinatesUI(lat: number | null, lng: number | null) {
 
 // ---------------------- Initialization ----------------------
 
+/**
+ * Initializes the Google Map and overlays Deck.gl layers.
+ */
 function initMap(): void {
-   const map = new google.maps.Map(
+  const map = new google.maps.Map(
     document.getElementById("map") as HTMLElement,
     {
       center: { lat: 39.5, lng: -98.35 },
       zoom: 4,
       tilt: 30,
-      mapId: "90f87356969d889c", // you can keep or remove this if not needed
+      mapId: "90f87356969d889c",
       styles: [
         { featureType: "all", elementType: "labels", stylers: [{ visibility: "off" }] },
         { featureType: "road", elementType: "all", stylers: [{ visibility: "off" }] },
         { featureType: "poi", elementType: "all", stylers: [{ visibility: "off" }] },
-        { featureType: "administrative", elementType: "all", stylers: [{ visibility: "on" }] },
+        { featureType: "administrative", elementType: "all", stylers: [{ visibility: "off" }] },
         { featureType: "transit", elementType: "all", stylers: [{ visibility: "off" }] },
         { featureType: "water", elementType: "labels", stylers: [{ visibility: "off" }] },
         { featureType: "landscape", elementType: "labels", stylers: [{ visibility: "off" }] }
@@ -623,9 +714,9 @@ function initMap(): void {
 
   overlay = new GoogleMapsOverlay({
     layers: buildLayers(),
-    force: 'webgl',
     getTooltip: ({ object, layer }) => {
       if (!object) return null;
+      // Tooltip for icon layer
       if (layer?.id === 'aircraft-icon') {
         const name = object?.properties?.name ?? "Icon";
         const [lng, lat] = asLngLat(object) ?? [];
@@ -639,6 +730,7 @@ function initMap(): void {
           `
         };
       }
+      // Tooltip for pins layer
       if (layer?.id === "pins") {
         const name = object?.properties?.name ?? "Pin";
         const [lng, lat] = asLngLat(object) ?? [];
@@ -652,6 +744,7 @@ function initMap(): void {
           `
         };
       }
+      // Tooltip for connections layer
       const fromObj = object?.from ?? object?.properties?.from;
       const toObj   = object?.to   ?? object?.properties?.to;
       const fromName = fromObj?.name ?? "From";
@@ -672,7 +765,6 @@ function initMap(): void {
             </div>
             <div><b>${fromName}</b> <span style="opacity:1;">(${fromTech})</span></div>
             <div><b>${toName}</b> &nbsp;&nbsp;<span style="opacity:1;">(${toTech})</span></div>
-          </div>
           </div>
         `
       };

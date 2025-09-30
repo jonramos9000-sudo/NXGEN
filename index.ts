@@ -657,7 +657,7 @@ function initMap(): void {
       zoom: 4,
       tilt: 30,
       disableDefaultUI: true,
-      //mapId: "90f87356969d889c",
+      mapId: "90f87356969d889c",
       styles: [
         { featureType: "all", elementType: "labels", stylers: [{ visibility: "off" }] },
         { featureType: "road", elementType: "all", stylers: [{ visibility: "off" }] },

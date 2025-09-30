@@ -977,20 +977,7 @@
     },
     "to": {
       "name": "E6",
-      "coordinates": [-124.122174, 39.676226]
-    },
-    "Connection_type": "N"
-  },
-  {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "HUB",
-      "coordinates": [-118.7242, 39.4204]
-    },
-    "to": {
-      "name": "Support Team",
-      "coordinates": [-123.01213543607518, 39.19723610755426]
+      "coordinates": [-119.653632, 40.987996]
     },
     "Connection_type": "N"
   },
@@ -1054,7 +1041,7 @@
     "outbound": 0,
     "from": {
       "name": "sb",
-      "coordinates": [-157.52838970090178, 45.266622232433164]
+      "coordinates": [-131.808665, 40.665136]
     },
     "to": {
       "name": "e",
@@ -1067,7 +1054,7 @@
     "outbound": 0,
     "from": {
       "name": "sb",
-      "coordinates": [-157.52838970090178, 45.266622232433164]
+      "coordinates": [-131.808665, 40.665136]
     },
     "to": {
       "name": "HI",
@@ -1080,7 +1067,7 @@
     "outbound": 0,
     "from": {
       "name": "sb",
-      "coordinates": [-157.52838970090178, 45.266622232433164]
+      "coordinates": [-131.808665, 40.665136]
     },
     "to": {
       "name": "Beale HFGCS",
@@ -1105,8 +1092,8 @@
     "inbound": 0,
     "outbound": 0,
     "from": {
-      "name": "Support Team",
-      "coordinates": [-123.01213543607518, 39.19723610755426]
+      "name": "Hub",
+      "coordinates": [-117.686219, 42.078896]
     },
     "to": {
       "name": "Beale HFGCS",
@@ -1118,12 +1105,12 @@
     "inbound": 0,
     "outbound": 0,
     "from": {
-      "name": "E6",
-      "coordinates": [-124.122174, 39.676226]
+      "name": "Hub",
+      "coordinates": [-117.686219, 42.078896]
     },
     "to": {
-      "name": "Beale HFGCS",
-      "coordinates": [-121.3599, 39.1115]
+      "name": "LRT",
+      "coordinates": [-122.650018, 41.258979]
     },
     "Connection_type": "HF"
   },
@@ -1131,14 +1118,41 @@
     "inbound": 0,
     "outbound": 0,
     "from": {
+      "name": "Airfield 2",
+      "coordinates": [-118.886914, 36.835072]
+    },
+    "to": {
+      "name": "LRT",
+      "coordinates": [-120.770316, 37.753243]
+    },
+    "Connection_type": "HF"
+  },
+  {
+    "inbound": 0,
+    "outbound": 0,
+    "from": {
+      "name": "ST",
+      "coordinates": [-124.153609, 40.762300]
+    },
+    "to": {
       "name": "E6",
       "tech": "PRC-160",
-      "coordinates": [-124.122174, 39.676226]
+      "coordinates": [-127.336670, 40.647058]
+    },
+    "Connection_type": "HF"
+  },
+  
+  {
+    "inbound": 0,
+    "outbound": 0,
+    "from": {
+      "name": "sb",
+      "coordinates": [-131.808665, 40.665136]
     },
     "to": {
-      "name": "Support Team",
-      "tech": "PRC-160+TRAX",
-      "coordinates": [-123.01213543607518, 39.19723610755426]
+      "name": "E6",
+      "tech": "PRC-160",
+      "coordinates": [-127.336670, 40.647058]
     },
     "Connection_type": "HF"
   },
@@ -1146,12 +1160,13 @@
     "inbound": 0,
     "outbound": 0,
     "from": {
-      "name": "HUB",
-      "coordinates": [-118.7242, 39.4204]
+      "name": "LRT",
+      "coordinates": [-122.650018, 41.258979]
     },
     "to": {
-      "name": "Support Team",
-      "coordinates": [-123.01213543607518, 39.19723610755426]
+      "name": "E6",
+      "tech": "PRC-160",
+      "coordinates": [-121.826695, 41.694258]
     },
     "Connection_type": "HF"
   }

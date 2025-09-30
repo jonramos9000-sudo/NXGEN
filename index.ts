@@ -23,6 +23,18 @@ const airplaneIcon = "database/icons/airplane.png";
 const boatIcon = "database/icons/a-large-navy-ship-silhouette-vector.png";
 const truckIcon = "database/icons/truck.png";
 const trailerIcon = "database/icons/trailer.png"
+const STATE_LINES_ONLY_MAP_STYLE = [
+  { featureType: "road", elementType: "geometry", stylers: [{ visibility: "off" }] },
+  { featureType: "road", elementType: "labels", stylers: [{ visibility: "off" }] },
+  { featureType: "poi", elementType: "all", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", elementType: "all", stylers: [{ visibility: "off" }] },
+  { featureType: "water", elementType: "labels", stylers: [{ visibility: "off" }] },
+  { featureType: "administrative.neighborhood", elementType: "all", stylers: [{ visibility: "off" }] },
+  { featureType: "administrative.locality", elementType: "all", stylers: [{ visibility: "off" }] },
+  { featureType: "administrative.province", elementType: "geometry.stroke", stylers: [{ visibility: "on" }, { weight: 2 }] },
+  { featureType: "administrative.country", elementType: "geometry.stroke", stylers: [{ visibility: "on" }] },
+  { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#f4f4f4" }] }
+];
 
 const ICON_MAP = {
   airplane: airplaneIcon,
@@ -281,8 +293,8 @@ function buildLayers() {
     autoHighlight: true,
     getPosition: (d: any) => d.geometry.coordinates,
     radiusUnits: "pixels",
-    radiusMinPixels: 11,
-    radiusMaxPixels: 18,
+    radiusMinPixels: 8,
+    radiusMaxPixels: 11,
     getFillColor: (d: any) => colorPinkByType(d),
     stroked: true,
     getLineColor: [0, 0, 0, 200],
@@ -301,7 +313,7 @@ function buildLayers() {
     sizeUnits: 'pixels',
     getSize: () => 50,
     sizeMinPixels: 40,
-    sizeMaxPixels: 60,
+    sizeMaxPixels: 50,
     getPosition: (d: any) => d.geometry.coordinates,
     getIcon: (d: any) => {
       const iconName = d.properties.icon?.toLowerCase();
@@ -323,6 +335,24 @@ function buildLayers() {
       depthMask: false
     }
   });
+
+  const circleLayer = new ScatterplotLayer({
+    id: 'radius-circle',
+    data: [{ position: [-118.7242, 39.4204] }], // HUB coordinates
+    pickable: false,
+    stroked: true,
+    filled: true,
+    radiusUnits: 'meters',
+    getPosition: (d: any) => d.position,
+    getRadius: 482803, // 300 miles in meters
+    getFillColor: [200, 0, 0, 30],
+    getLineColor: [200, 0, 0, 100],
+    lineWidthMinPixels: 2,
+    parameters: {
+      depthTest: false
+    }
+  });
+
   return [connectionsLayer, pinsLayer, icons];
 }
 

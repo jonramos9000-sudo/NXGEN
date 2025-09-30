@@ -5,7 +5,7 @@
     { "type": "Feature", "properties": { "name": "Point 2" }, "geometry": { "type": "Point", "coordinates": [-94.2203, 35.2012] } },
     { "type": "Feature", "properties": { "name": "Point 3" }, "geometry": { "type": "Point", "coordinates": [-73.1462, 44.4773] } },
     { "type": "Feature", "properties": { "name": "Point 4" }, "geometry": { "type": "Point", "coordinates": [-86.68194, 36.12667] } },
-    { "type": "Feature", "properties": { "name": "E6", "icon": "airplane" }, "geometry": { "type": "Point", "coordinates": [-124.122174, 39.676226] } },
+    { "type": "Feature", "properties": { "name": "E6", "icon": "airplane" }, "geometry": { "type": "Point", "coordinates": [-121.826695, 41.694258] } },
     { "type": "Feature", "properties": { "name": "Point 6" }, "geometry": { "type": "Point", "coordinates": [-80.57285, 28.48864] } },
     { "type": "Feature", "properties": { "name": "H_AK" }, "geometry": { "type": "Point", "coordinates": [-76.867142, 38.811563] } },
     { "type": "Feature", "properties": { "name": "E" }, "geometry": { "type": "Point", "coordinates": [-149.811871, 61.252815] } },
@@ -15,10 +15,9 @@
     { "type": "Feature", "properties": { "name": "Point 12" }, "geometry": { "type": "Point", "coordinates": [-120.5274, 33.742] } },
     { "type": "Feature", "properties": { "name": "Point 13" }, "geometry": { "type": "Point", "coordinates": [-97.378979, 47.952266] } },
     { "type": "Feature", "properties": { "name": "Point 14" }, "geometry": { "type": "Point", "coordinates": [-97.4165753955899, 37.66291116755573] } },
-    { "type": "Feature", "properties": { "name": "Support Team" }, "geometry": { "type": "Point", "coordinates": [-123.01213543607518, 39.19723610755426] } },
     { "type": "Feature", "properties": { "name": "B" }, "geometry": { "type": "Point", "coordinates": [-116.76929328740175, 39.655821031300874] } },
     { "type": "Feature", "properties": { "name": "M" }, "geometry": { "type": "Point", "coordinates": [-107.08658026262916, 40.388752383384144] } },
-    { "type": "Feature", "properties": { "name": "sb", "icon":"boat"}, "geometry": { "type": "Point", "coordinates": [-157.52838970090178, 45.266622232433164] } },
+    { "type": "Feature", "properties": { "name": "sb", "icon":"boat"}, "geometry": { "type": "Point", "coordinates": [-131.808665, 40.665136] } },
     { "type": "Feature", "properties": { "name": "Beale HFCGS" }, "geometry": { "type": "Point", "coordinates": [-121.3599, 39.1115] } },
     { "type": "Feature", "properties": { "name": "bg" }, "geometry": { "type": "Point", "coordinates": [-98.05674958276393, 42.15430638202701] } },
     { "type": "Feature", "properties": { "name": "PENT" }, "geometry": { "type": "Point", "coordinates": [-77.05884, 38.87186] } },
@@ -43,6 +42,41 @@
     { "type": "Feature", "properties": { "name": "La Moure", "type": "TMR" }, "geometry": { "type": "Point", "coordinates": [-98.2948, 46.3572] } },
     { "type": "Feature", "properties": { "name": "Norfolk", "type": "TMR" }, "geometry": { "type": "Point", "coordinates": [-76.2859, 36.8508] } },
     { "type": "Feature", "properties": { "name": "Yokosuka", "type": "TMR" }, "geometry": { "type": "Point", "coordinates": [139.6672, 35.2810] } },
-    { "type": "Feature", "properties": { "name": "Oklahoma City", "type": "TMR" }, "geometry": { "type": "Point", "coordinates": [-97.5164, 35.4676] } }
+    { "type": "Feature", "properties": { "name": "Oklahoma City", "type": "TMR" }, "geometry": { "type": "Point", "coordinates": [-97.5164, 35.4676] } },
+    {
+      "type": "Feature",
+      "properties": { "name": "Hub" },
+      "geometry": { "type": "Point", "coordinates": [-117.686219, 42.078896] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Hub" },
+      "geometry": { "type": "Point", "coordinates": [-118.886914, 36.835072] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Hub" },
+      "geometry": { "type": "Point", "coordinates": [-115.320093, 39.330707] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "" },
+      "geometry": { "type": "Point", "coordinates": [-124.153609, 40.762300] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "E6", "icon":"airplane" },
+      "geometry": { "type": "Point", "coordinates": [-127.336670, 40.647058] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "LRT"},
+      "geometry": { "type": "Point", "coordinates": [-122.650018, 41.258979] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "LRT"},
+      "geometry": { "type": "Point", "coordinates": [-120.770316, 37.753243] }
+    }
   ]
 }

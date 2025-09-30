@@ -108,7 +108,8 @@ function getConnType(d: any): string {
 }
 
 /**
- * Retrieve the name property from a feature.
+*
+* Retrieve the name property from a feature.
  */
 function getPointName(d: any): string {
     return getProp(d, "name") ?? "";

@@ -249,6 +249,9 @@ function colorByTypeRGBA(d: any): [number, number, number, number] {
     case "N": return [0, 128, 200, 220];
     case "C": return [0, 200, 0, 220];
     case "HF": return [200, 0, 0, 220];
+    case "VHF": return [128, 128, 128, 220];
+    case "SATCOM": return [255, 165, 0, 220];
+    
     default:  return [128, 128, 128, 200];
   }
 }
@@ -261,6 +264,8 @@ function tiltByType(d: any): number {
     case "N": return 5;
     case "C": return 10;
     case "HF": return 0;
+    case "VHF": return 10;
+    case "SATCOM": return 10;
     default:  return 0;
   }
 }
@@ -306,9 +311,9 @@ function asLngLat(obj: any): [number, number] | null {
 
 // ---------------------- Filtering (GPU) ----------------------
 
-type ConnType = "N" | "C" | "HF";
-const ALL_TYPES: ConnType[] = ["N", "C", "HF"];
-let activeTypes = new Set<ConnType>(["HF"]);
+type ConnType = "N" | "C" | "HF" |"VHF" | "SATCOM";
+const ALL_TYPES: ConnType[] = ["N", "C", "HF", "VHF", "SATCOM"];
+let activeTypes = new Set<ConnType>(["HF", "VHF", "SATCOM"]);
 
 // Hub coordinates
 const HUB_LNG   = -82.492696;
@@ -516,7 +521,9 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
   const connItems: { key: ConnType; label: string; color: string }[] = [
     { key: "N",   label: "N",   color: "rgb(0,128,200)" },
     { key: "C",   label: "C",   color: "rgb(0,200,0)" },
-    { key: "HF", label: "HF", color: "rgb(200,0,0)" }
+    { key: "HF", label: "HF", color: "rgb(200,0,0)" },
+    { key: "VHF", label: "VHF", color: "rgb(128,128,128)"},
+    { key: "SATCOM", label: "SATCOM", color: "rgb(255,165,0)" }
   ];
   const pinItems: { key: PointType; label: string; color: string }[] = [
     { key: "PINK_GROUP",      label: "F",   color: "rgb(255, 105, 180)" },

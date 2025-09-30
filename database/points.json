@@ -60,7 +60,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "" },
+      "properties": { "name": "MLST" },
       "geometry": { "type": "Point", "coordinates": [-124.153609, 40.762300] }
     },
     {

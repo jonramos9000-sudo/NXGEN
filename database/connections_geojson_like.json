@@ -1169,5 +1169,85 @@
       "coordinates": [-121.826695, 41.694258]
     },
     "Connection_type": "HF"
+  },
+  {
+    "inbound": 0,
+    "outbound": 0,
+    "from": {
+      "name": "LRT",
+      "coordinates": [-122.650018, 41.258979]
+    },
+    "to": {
+      "name": "E6",
+      "tech": "PRC-160",
+      "coordinates": [-121.826695, 41.694258]
+    },
+    "Connection_type": "VHF"
+  },
+  {
+    "inbound": 0,
+    "outbound": 0,
+    "from": {
+      "name": "ST",
+      "coordinates": [-124.153609, 40.762300]
+    },
+    "to": {
+      "name": "sb",
+      "coordinates": [-131.808665, 40.665136]
+    },
+    "Connection_type": "SATCOM"
+  },
+  {
+    "inbound": 0,
+    "outbound": 0,
+    "from": {
+      "name": "ST",
+      "coordinates": [-124.153609, 40.762300]
+    },
+    "to": {
+      "name": "Hub",
+      "coordinates": [-117.686219, 42.078896]
+    },
+    "Connection_type": "SATCOM"
+  },
+  {
+    "inbound": 0,
+    "outbound": 0,
+    "from": {
+      "name": "ST",
+      "coordinates": [-124.153609, 40.762300]
+    },
+    "to": {
+      "name": "Hub",
+      "coordinates": [-117.686219, 42.078896]
+    },
+    "Connection_type": "HF"
+  },
+  {
+    "inbound": 0,
+    "outbound": 0,
+    "from": {
+      "name": "sb",
+      "coordinates": [-131.808665, 40.665136]
+    },
+    "to": {
+      "name": "Hub",
+      "coordinates": [-117.686219, 42.078896]
+    },
+    "Connection_type": "SATCOM"
+  },
+  {
+    "inbound": 0,
+    "outbound": 0,
+    "from": {
+      "name": "E6",
+      "coordinates": [-127.336670, 40.647058]
+    },
+    "to": {
+      "name": "E6",
+      "tech": "PRC-160",
+      "coordinates": [-121.826695, 41.694258]
+    },
+    "Connection_type": "HF"
   }
 ]

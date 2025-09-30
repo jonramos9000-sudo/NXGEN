@@ -180,8 +180,8 @@ const PinLogic = {
         // GREEN_GROUP
         "M": "GREEN_GROUP",
 
-    // RED_GROUP
-    "HUB": "RED_GROUP",
+        // RED_GROUP
+        "HUB": "RED_GROUP",
 
         // TURQUOISE_GROUP
         "PENT": "TURQUOISE_GROUP",
@@ -245,24 +245,32 @@ let showPinLabels = false;
  * Get RGBA color for a connection feature based on type.
  */
 function colorByTypeRGBA(d: any): [number, number, number, number] {
-  switch (getConnType(d)) {
-    case "N": return [0, 128, 200, 220];
-    case "C": return [0, 200, 0, 220];
-    case "HF": return [200, 0, 0, 220];
-    default:  return [128, 128, 128, 200];
-  }
+    switch (getConnType(d)) {
+        case "N": return [0, 128, 200, 220];
+        case "C": return [0, 200, 0, 220];
+        case "HF": return [200, 0, 0, 220];
+        default: 	return [128, 128, 128, 200];
+    }
+}
+
+/**
+ * Get color string (rgb) for use in HTML/CSS based on connection type.
+ */
+function colorByTypeRGB(d: any): string {
+    const [r, g, b] = colorByTypeRGBA(d);
+    return `rgb(${r}, ${g}, ${b})`;
 }
 
 /**
  * Get tilt value for a connection feature based on type.
  */
 function tiltByType(d: any): number {
-  switch (getConnType(d)) {
-    case "N": return 5;
-    case "C": return 10;
-    case "HF": return 0;
-    default:  return 0;
-  }
+    switch (getConnType(d)) {
+        case "N": return 5;
+        case "C": return 10;
+        case "HF": return 0;
+        default: 	return 0;
+    }
 }
 
 /**
@@ -312,11 +320,24 @@ function asLngLat(obj: any): [number, number] | null {
     return null;
 }
 
-// ---------------------- Filtering (GPU) ----------------------
+/**
+ * Calculates a point along the arc's chord, used as the label position.
+ * For simple line layers, this is the midpoint.
+ */
+function getLabelMidpoint(d: any): [number, number] {
+    const s = getSourcePos(d);
+    const t = getTargetPos(d);
+    if (!Array.isArray(s) || !Array.isArray(t)) return [0, 0];
+    
+    // Simple midpoint calculation
+    const lng = (s[0] + t[0]) / 2;
+    const lat = (s[1] + t[1]) / 2;
+    
+    // Return world coordinate [lng, lat]
+    return [lng, lat];
+}
 
-type ConnType = "N" | "C" | "HF";
-const ALL_TYPES: ConnType[] = ["N", "C", "HF"];
-let activeTypes = new Set<ConnType>(["HF"]);
+// ---------------------- Filtering (GPU) ----------------------
 
 // Hub coordinates
 const HUB_LNG 	= -82.492696;
@@ -468,25 +489,25 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
         }
     });
 
-  // Pin scatterplot
-  const pinsLayer = new ScatterplotLayer({
-    id: "pins",
-    data: pinsData,
-    pickable: true,
-    autoHighlight: true,
-    getPosition: (d: any) => d.geometry.coordinates,
-    radiusUnits: "pixels",
-    radiusMinPixels: 8,
-    radiusMaxPixels: 11,
-    getFillColor: (d: any) => colorPinkByType(d),
-    stroked: true,
-    getLineColor: [0, 0, 0, 200],
-    lineWidthMinPixels: 1,
-    getFilterValue: (d: any) => activePointTypes.has(d._pinType) ? 1 : 0,
-    filterRange: [1, 1],
-    extensions: [dataFilterExt],
-    updateTriggers: { getFilterValue: filterKey() }
-  });
+    // Pin scatterplot
+    const pinsLayer = new ScatterplotLayer({
+        id: "pins",
+        data: pinsData,
+        pickable: true,
+        autoHighlight: true,
+        getPosition: (d: any) => d.geometry.coordinates,
+        radiusUnits: "pixels",
+        radiusMinPixels: 11,
+        radiusMaxPixels: 18,
+        getFillColor: (d: any) => colorPinkByType(d),
+        stroked: true,
+        getLineColor: [0, 0, 0, 200],
+        lineWidthMinPixels: 1,
+        getFilterValue: (d: any) => activePointTypes.has(d._pinType) ? 1 : 0,
+        filterRange: [1, 1],
+        extensions: [dataFilterExt],
+        updateTriggers: { getFilterValue: filterKey() }
+    });
 
     // Icon layer for aircraft/boat/truck/trailer pins
     const icons = new deck.IconLayer({
@@ -562,28 +583,28 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
  * Add UI panels for multi-filter controls (connections and pins).
  */
 function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
-  const connItems: { key: ConnType; label: string; color: string }[] = [
-    { key: "N",   label: "N",   color: "rgb(0,128,200)" },
-    { key: "C",   label: "C",   color: "rgb(0,200,0)" },
-    { key: "HF", label: "HF", color: "rgb(200,0,0)" }
-  ];
-  const pinItems: { key: PointType; label: string; color: string }[] = [
-    { key: "PINK_GROUP",      label: "F",   color: "rgb(255, 105, 180)" },
-    { key: "VIOLET_GROUP",      label: "SB", color: "rgb(130, 42, 245)" },
-    { key: "RED_GROUP",     label: "P",   color: "rgb(200, 0, 0)" },
-    { key: "TURQUOISE_GROUP", label: "D",   color: "rgb(64, 224, 208)" },
-    { key: "YELLOW_GROUP",      label: "G",   color: "rgb(255, 255, 0)" },
-    { key: "GREEN_GROUP",       label: "M",   color: "rgb(0, 128, 0)" },
-    { key: "PURPLE_GROUP",      label: "T",   color: "rgb(128, 0, 128)" },
-    { key: "ORANGE_GROUP",      label: "B",   color: "rgb(255, 165, 0)" },
-    { key: "BLUE_GROUP",      label: "S",   color: "rgb(0, 120, 255)" },
-    { key: "WHITE_GROUP",       label: "W",   color: "rgb(197, 110, 255)" }
-  ];
+    const connItems: { key: ConnType; label: string; color: string }[] = [
+        { key: "N", 	label: "N", 	color: "rgb(0,128,200)" },
+        { key: "C", 	label: "C", 	color: "rgb(0,200,0)" },
+        { key: "HF", label: "HF", color: "rgb(200,0,0)" }
+    ];
+    const pinItems: { key: PointType; label: string; color: string }[] = [
+        { key: "PINK_GROUP", 	 	label: "F", 	color: "rgb(255, 105, 180)" },
+        { key: "VIOLET_GROUP", 		label: "SB", color: "rgb(130, 42, 245)" },
+        { key: "RED_GROUP", 	 	label: "P", 	color: "rgb(200, 0, 0)" },
+        { key: "TURQUOISE_GROUP", label: "D", 	color: "rgb(64, 224, 208)" },
+        { key: "YELLOW_GROUP", 		label: "G", 	color: "rgb(255, 255, 0)" },
+        { key: "GREEN_GROUP", 		label: "M", 	color: "rgb(0, 128, 0)" },
+        { key: "PURPLE_GROUP", 		label: "T", 	color: "rgb(128, 0, 128)" },
+        { key: "ORANGE_GROUP", 		label: "B", 	color: "rgb(255, 165, 0)" },
+        { key: "BLUE_GROUP", 		label: "S", 	color: "rgb(0, 120, 255)" },
+        { key: "WHITE_GROUP", 		label: "W", 	color: "rgb(197, 110, 255)" }
+    ];
 
     const controlsContainer = document.createElement('div');
     controlsContainer.innerHTML = `
         <button id="filters-toggle" title="Show/Hide filters" style="position: absolute; z-index: 10; top: 10px; left: 190px; padding:8px 10px; border:1px solid #ccc; border-radius:8px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.15); font: 13px system-ui, sans-serif; cursor:pointer;">Filters</button>
-        <div id="controls-container" style="position:absolute; z-index:5; top:50px; left:10px; font: 13px system-ui, sans-serif; display:flex; flex-direction:column; gap:10px; max-width: 200px;">
+        <div id="controls-container" style="position:absolute; z-index:5; top:60px; left:10px; font: 13px system-ui, sans-serif; display:flex; flex-direction:column; gap:10px; max-width: 200px;">
             
             <div id="connection-legend-box" class="legend-box">
                 <h2 style="font-size:16px; margin:0;">Connections</h2>
@@ -759,7 +780,7 @@ function addCoordinatesUI() {
     coordsContainer.id = "coords-container";
     // *** MODIFIED: Changed position from 'left: 10px;' to 'right: 10px;' ***
     coordsContainer.style.cssText = `
-        position: absolute; z-index: 5; bottom: 30px; right: 10px;
+        position: absolute; z-index: 5; bottom: 30px; right: 60px;
         background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.15);
         padding: 8px 10px;
         font: 13px system-ui, sans-serif;

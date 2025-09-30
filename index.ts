@@ -656,12 +656,13 @@ function initMap(): void {
       center: { lat: 39.5, lng: -98.35 },
       zoom: 4,
       tilt: 30,
-      mapId: "90f87356969d889c", // you can keep or remove this if not needed
+      disableDefaultUI: true,
+      //mapId: "90f87356969d889c",
       styles: [
         { featureType: "all", elementType: "labels", stylers: [{ visibility: "off" }] },
         { featureType: "road", elementType: "all", stylers: [{ visibility: "off" }] },
         { featureType: "poi", elementType: "all", stylers: [{ visibility: "off" }] },
-        { featureType: "administrative", elementType: "all", stylers: [{ visibility: "off" }] },
+        { featureType: "administrative", elementType: "all", stylers: [{ visibility: "on" }] },
         { featureType: "transit", elementType: "all", stylers: [{ visibility: "off" }] },
         { featureType: "water", elementType: "labels", stylers: [{ visibility: "off" }] },
         { featureType: "landscape", elementType: "labels", stylers: [{ visibility: "off" }] }
@@ -684,6 +685,7 @@ function initMap(): void {
   // Overlay + tooltip
   overlay = new GoogleMapsOverlay({
     layers: buildLayers(),
+    force: 'webgl',
     getTooltip: ({ object, layer }) => {
   if (!object) return null;
 

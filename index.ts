@@ -19,6 +19,19 @@ import type * as GeoJSON from "geojson";
 const ScatterplotLayer = deck.ScatterplotLayer;
 const ArcLayer = deck.ArcLayer;
 const GoogleMapsOverlay = deck.GoogleMapsOverlay;
+const iconLayer = deck.IconLayer;
+const DataFilterExtension = deck.DataFilterExtension;
+const airplaneIcon = "database/icons/airplane.png";
+const boatIcon = "database/icons/a-large-navy-ship-silhouette-vector.png";
+const truckIcon = "database/icons/truck.png";
+const trailerIcon = "database/icons/trailer.png"
+
+const ICON_MAP = {
+  airplane: airplaneIcon,
+  boat: boatIcon,
+  truck: truckIcon,
+  trailer: trailerIcon,
+};
 
 // ---------------------- Types & Data ----------------------
 
@@ -28,6 +41,13 @@ type Data = GeoJSON.FeatureCollection<GeoJSON.Geometry, Properties> | any[];
 
 const connections: string | Data = "database/connections_geojson_like.json";
 const points: string | Data = "database/points.json";
+
+//test icon pin
+const feature = {
+  type: "Feature",
+  properties: { name: "E6" },
+  geometry: { type: "Point", coordinates: [-124.122174, 39.676226] }
+};
 
 // ---------------------- Helper Functions ----------------------
 
@@ -49,6 +69,11 @@ function getPointName(d: any): string {
   return getProp(d, "name") ?? "";
 }
 
+function toggleDisplay(el: HTMLElement, force?: boolean) {
+  const shouldShow = force !== undefined ? force : el.style.display === "none";
+  el.style.display = shouldShow ? "flex" : "none";
+}
+
 // ---------------------- Pin Type Logic ----------------------
 
 type PointType =
@@ -66,7 +91,7 @@ type PointType =
 const PinLogic = {
   ALL_POINT_TYPES: [
     "RED_GROUP", "TURQUOISE_GROUP", "YELLOW_GROUP", "GREEN_GROUP",
-    "PURPLE_GROUP", "ORANGE_GROUP", "BLUE_GROUP", "VIOLET_GROUP", "PINK_GROUP"
+    "PURPLE_GROUP", "ORANGE_GROUP", "BLUE_GROUP", "VIOLET_GROUP", "PINK_GROUP", "WHITE_GROUP"
   ] as PointType[],
 
   PIN_COLOR_MAP: {
@@ -89,11 +114,11 @@ const PinLogic = {
     // YELLOW_GROUP
     "H_AK": "YELLOW_GROUP",
     "Point 13": "YELLOW_GROUP",
-    "E": "YELLOW_GROUP",
+    "E6": "YELLOW_GROUP",
     "Point 6": "YELLOW_GROUP",
 
     // PURPLE_GROUP
-    "T_california": "PURPLE_GROUP",
+    "Support Team": "PURPLE_GROUP",
 
     // ORANGE_GROUP
     "B": "ORANGE_GROUP",
@@ -102,7 +127,7 @@ const PinLogic = {
     "M": "GREEN_GROUP",
 
     // RED_GROUP
-    "Point 5": "RED_GROUP",
+    "HUB": "RED_GROUP",
 
     // TURQUOISE_GROUP
     "PENT": "TURQUOISE_GROUP",
@@ -191,9 +216,9 @@ function asLngLat(obj: any): [number, number] | null {
 
 // ---------------------- Filtering (GPU) ----------------------
 
-type ConnType = "N" | "C" | "H";
-const ALL_TYPES: ConnType[] = ["N", "C", "H"];
-let activeTypes = new Set<ConnType>(ALL_TYPES);
+type ConnType = "N" | "C" | "HF";
+const ALL_TYPES: ConnType[] = ["N", "C", "HF"];
+let activeTypes = new Set<ConnType>(["HF"]);
 
 // Hub block filter #1
 const HUB_LNG  = -82.492696;
@@ -205,6 +230,7 @@ let hideHubConnections = false;
 const HUB2_LNG = 9.077841;
 const HUB2_LAT = 48.734481;
 let hideHub2Connections = false;
+let showIcons = true;
 
 function near(a: number, b: number, eps = HUB_EPS) {
   return Math.abs(a - b) <= eps;
@@ -238,7 +264,7 @@ function filterKey() {
     `hub1:${hideHubConnections ? 1 : 0}`,
     `hub2:${hideHub2Connections ? 1 : 0}`,
     Array.from(activePointTypes).sort().join(",")
-  ].join("|");
+  ].join("|") + `|icons:${showIcons ? 1 : 0}`;
 }
 
 // ---------------------- Build Layers ----------------------
@@ -283,13 +309,49 @@ function buildLayers() {
     lineWidthMinPixels: 1,
 
     // GPU filter for pins by group
-    getFilterValue: (d: any) => activePointTypes.has(getPinkType(d)) ? 1 : 0,
+    getFilterValue: (d: any) => (activePointTypes.has(getPinkType(d)) && !d.properties.icon) ? 1 : 0,
     filterRange: [1, 1],
     extensions: [dataFilterExt],
     updateTriggers: { getFilterValue: filterKey() }
   });
 
-  return [connectionsLayer, pinsLayer];
+  const icons = new deck.IconLayer({
+  id: 'aircraft-icon',
+  data: points,
+  dataTransform: (d: any) => (d && d.type === "FeatureCollection" ? d.features.filter((f: any) => f.properties.icon) : d),
+  pickable: true,
+
+  sizeUnits: 'pixels',
+  getSize: () => 50,
+  sizeMinPixels: 40,
+  sizeMaxPixels: 60,
+  getPosition: (d: any) => d.geometry.coordinates,
+  getIcon: (d: any) => {
+    const iconName = d.properties.icon?.toLowerCase();
+    return {
+      url: ICON_MAP[iconName as keyof typeof ICON_MAP],
+      width: 32,
+      height: 32,
+      anchorX: 16,
+      anchorY: 16,
+    };
+  },
+
+  loadOptions: { image: { crossOrigin: 'anonymous' } },
+
+  // GPU filter for icons
+  getFilterValue: (d: any) => showIcons ? 1 : 0,
+  filterRange: [1, 1],
+  extensions: [dataFilterExt],
+  updateTriggers: { getFilterValue: filterKey() },
+
+  // 👇 Force icons to render on top of everything
+  parameters: {
+    depthTest: false,   // don’t let 3D depth hide icons
+    depthMask: false    // avoid writing to depth buffer
+  }
+});
+  return [connectionsLayer, pinsLayer, icons];
 }
 
 // ---------------------- UI: Legend and Controls ----------------------
@@ -298,20 +360,34 @@ const connCheckboxes: HTMLInputElement[] = [];
 const pinCheckboxes: HTMLInputElement[] = [];
 
 function addMultiFilterControls(onChange: () => void) {
+  // --- Floating button to show/hide the whole filters window ---
+  const floatingBtn = document.createElement("button");
+  floatingBtn.id = "filters-toggle";
+  floatingBtn.textContent = "Filters";
+  floatingBtn.title = "Show/Hide filters";
+  floatingBtn.style.cssText = `
+    position:absolute; z-index:6; top:10px; left:10px;
+    padding:8px 10px; border:1px solid #ccc; border-radius:8px;
+    background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.15);
+    font: 13px system-ui, sans-serif; cursor:pointer;
+  `;
+  document.body.appendChild(floatingBtn);
+
+  // --- Main window that holds the two panels ---
   const mainContainer = document.createElement("div");
   mainContainer.id = "controls-container";
   mainContainer.style.cssText = `
-    position:absolute; z-index:5; top:10px; left:10px;
+    position:absolute; z-index:5; top:50px; left:10px;
     font: 13px system-ui, sans-serif;
     display:flex; flex-direction:column; gap:10px;
+    max-width: 320px;
   `;
 
   const makeLegendBox = () => {
     const box = document.createElement("div");
     box.style.cssText = `
       background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,.15);
-      padding:8px 10px;
-      display:flex; gap:20px; align-items:flex-start; flex-wrap:nowrap;
+      padding:8px 10px; display:flex; flex-direction:column; gap:10px;
     `;
     return box;
   };
@@ -325,6 +401,36 @@ function addMultiFilterControls(onChange: () => void) {
     `;
     b.onclick = handler;
     return b;
+  };
+
+  const makeHeader = (titleText: string) => {
+    // Returns {headerEl, bodyEl} — header has a chevron that collapses the body
+    const header = document.createElement("div");
+    header.style.cssText = `
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px; cursor:pointer; user-select:none;
+    `;
+    const title = document.createElement("h2");
+    title.textContent = titleText;
+    title.style.cssText = `font-size:16px; margin:0;`;
+
+    const chevron = document.createElement("span");
+    chevron.textContent = "▾"; // down
+    chevron.style.cssText = `font-size:14px; opacity:.8;`;
+
+    header.appendChild(title);
+    header.appendChild(chevron);
+
+    const body = document.createElement("div");
+    body.style.cssText = `display:flex; flex-direction:column; gap:10px;`;
+
+    header.onclick = () => {
+      const isHidden = body.style.display === "none";
+      body.style.display = isHidden ? "flex" : "none";
+      chevron.textContent = isHidden ? "▾" : "▸"; // swap chevron
+    };
+
+    return { headerEl: header, bodyEl: body, chevronEl: chevron };
   };
 
   const createFilterCheckboxes = (
@@ -366,92 +472,102 @@ function addMultiFilterControls(onChange: () => void) {
     return container;
   };
 
-  // --- Connections Legend Box ---
+  // Storage for checkbox references (so All/None can tick them visually)
+  const connCheckboxes: HTMLInputElement[] = [];
+  const pinCheckboxes: HTMLInputElement[] = [];
+
+  // --- Connections Panel ---
   const connectionsLegend = makeLegendBox();
-  const connectionsTitle = document.createElement("h2");
-  connectionsTitle.textContent = "Connections";
-  connectionsTitle.style.cssText = `font-size:16px; margin:0 0 10px 0;`;
-  connectionsLegend.prepend(connectionsTitle);
 
+  const connHeader = makeHeader("Connections");
+  connectionsLegend.appendChild(connHeader.headerEl);
+  connectionsLegend.appendChild(connHeader.bodyEl);
+
+  // Buttons section
   const connectionsButtonSection = document.createElement("div");
-  connectionsButtonSection.style.cssText = `display:flex; flex-direction:column; gap:10px;`;
+  connectionsButtonSection.style.cssText = `display:flex; flex-wrap:wrap; gap:8px;`;
 
-  // All Connections toggle
-  const allConnBtn = makeBtn("All Connections", () => {
+  const allConnBtn = makeBtn("All / None", () => {
+    const ALL_TYPES: ConnType[] = ["N", "C", "HF"];
     const isAllActive = activeTypes.size === ALL_TYPES.length;
-    const newState = !isAllActive;
+    // Mutate the Set in place
     activeTypes.clear();
-    if (newState) ALL_TYPES.forEach(t => activeTypes.add(t));
-    connCheckboxes.forEach(cb => cb.checked = newState);
+    if (!isAllActive) ALL_TYPES.forEach(t => activeTypes.add(t));
+    // Sync UI
+    connCheckboxes.forEach(cb => cb.checked = !isAllActive);
     onChange();
   });
   connectionsButtonSection.appendChild(allConnBtn);
 
-  // Hide connections to/from hub 1
-  const hubToggleWrap = document.createElement("label");
-  hubToggleWrap.style.cssText = `display:flex; align-items:center; gap:6px;`;
+  // Hub toggles
+  const hub1Wrap = document.createElement("label");
+  hub1Wrap.style.cssText = `display:flex; align-items:center; gap:6px;`;
+  const hub1Cb = document.createElement("input");
+  hub1Cb.type = "checkbox";
+  hub1Cb.checked = hideHubConnections;
+  hub1Cb.onchange = () => { hideHubConnections = hub1Cb.checked; onChange(); };
+  const hub1Txt = document.createElement("span");
+  hub1Txt.textContent = "Hide connections to/from FL";
+  hub1Wrap.appendChild(hub1Cb); hub1Wrap.appendChild(hub1Txt);
 
-  const hubCb = document.createElement("input");
-  hubCb.type = "checkbox";
-  hubCb.checked = hideHubConnections;
-  hubCb.onchange = () => { hideHubConnections = hubCb.checked; onChange(); };
-
-  const hubText = document.createElement("span");
-  hubText.textContent = "Hide connections to/from FL";
-
-  hubToggleWrap.appendChild(hubCb);
-  hubToggleWrap.appendChild(hubText);
-  connectionsButtonSection.appendChild(hubToggleWrap);
-
-  // Hide connections to/from hub 2 (NEW)
-  const hub2ToggleWrap = document.createElement("label");
-  hub2ToggleWrap.style.cssText = `display:flex; align-items:center; gap:6px;`;
-
+  const hub2Wrap = document.createElement("label");
+  hub2Wrap.style.cssText = `display:flex; align-items:center; gap:6px;`;
   const hub2Cb = document.createElement("input");
   hub2Cb.type = "checkbox";
   hub2Cb.checked = hideHub2Connections;
   hub2Cb.onchange = () => { hideHub2Connections = hub2Cb.checked; onChange(); };
+  const hub2Txt = document.createElement("span");
+  hub2Txt.textContent = "Hide connections to/from EU";
+  hub2Wrap.appendChild(hub2Cb); hub2Wrap.appendChild(hub2Txt);
 
-  const hub2Text = document.createElement("span");
-  hub2Text.textContent = "Hide connections to/from EU";
+  connectionsButtonSection.appendChild(hub1Wrap);
+  connectionsButtonSection.appendChild(hub2Wrap);
 
-  hub2ToggleWrap.appendChild(hub2Cb);
-  hub2ToggleWrap.appendChild(hub2Text);
-  connectionsButtonSection.appendChild(hub2ToggleWrap);
+  connHeader.bodyEl.appendChild(connectionsButtonSection);
 
-  // Type checkboxes
+  // Connection type checkboxes
   const connItems: { key: ConnType; label: string; color: string }[] = [
-    { key: "N", label: "N", color: "rgb(0,128,200)" },
-    { key: "C", label: "C", color: "rgb(0,200,0)" },
+    { key: "N",  label: "N",  color: "rgb(0,128,200)" },
+    { key: "C",  label: "C",  color: "rgb(0,200,0)" },
     { key: "HF", label: "HF", color: "rgb(200,0,0)" }
   ];
   const connectionsCheckboxSection = createFilterCheckboxes(
     connItems, activeTypes, connCheckboxes, onChange
   );
+  connHeader.bodyEl.appendChild(connectionsCheckboxSection);
 
-  connectionsLegend.appendChild(connectionsButtonSection);
-  connectionsLegend.appendChild(connectionsCheckboxSection);
-  mainContainer.appendChild(connectionsLegend);
-
-  // --- Pins Legend Box ---
+  // --- Pins Panel ---
   const pinsLegend = makeLegendBox();
-  const pinsTitle = document.createElement("h2");
-  pinsTitle.textContent = "Pins";
-  pinsTitle.style.cssText = `font-size:16px; margin:0 0 10px 0;`;
-  pinsLegend.prepend(pinsTitle);
+
+  const pinsHeader = makeHeader("Pins");
+  pinsLegend.appendChild(pinsHeader.headerEl);
+  pinsLegend.appendChild(pinsHeader.bodyEl);
 
   const pinsButtonSection = document.createElement("div");
-  pinsButtonSection.style.cssText = `display:flex; flex-direction:column; gap:10px;`;
+  pinsButtonSection.style.cssText = `display:flex; flex-wrap:wrap; gap:8px;`;
 
-  const allPinsBtn = makeBtn("All Pins", () => {
-    const isAllActive = activePointTypes.size === PinLogic.ALL_POINT_TYPES.length;
-    const newState = !isAllActive;
+  const allPinsBtn = makeBtn("All / None", () => {
+    const ALL = PinLogic.ALL_POINT_TYPES;
+    const isAllActive = activePointTypes.size === ALL.length;
     activePointTypes.clear();
-    if (newState) PinLogic.ALL_POINT_TYPES.forEach(t => activePointTypes.add(t));
-    pinCheckboxes.forEach(cb => cb.checked = newState);
+    if (!isAllActive) ALL.forEach(t => activePointTypes.add(t));
+    pinCheckboxes.forEach(cb => cb.checked = !isAllActive);
     onChange();
   });
   pinsButtonSection.appendChild(allPinsBtn);
+
+  // Icon toggle
+  const iconToggleWrap = document.createElement("label");
+  iconToggleWrap.style.cssText = `display:flex; align-items:center; gap:6px;`;
+  const iconToggleCb = document.createElement("input");
+  iconToggleCb.type = "checkbox";
+  iconToggleCb.checked = showIcons;
+  iconToggleCb.onchange = () => { showIcons = iconToggleCb.checked; onChange(); };
+  const iconToggleTxt = document.createElement("span");
+  iconToggleTxt.textContent = "Show Icons";
+  iconToggleWrap.appendChild(iconToggleCb); iconToggleWrap.appendChild(iconToggleTxt);
+  pinsButtonSection.appendChild(iconToggleWrap);
+  pinsHeader.bodyEl.appendChild(pinsButtonSection);
 
   const pinItems: { key: PointType; label: string; color: string }[] = [
     { key: "PINK_GROUP",      label: "F",  color: "rgb(255, 105, 180)" },
@@ -468,13 +584,19 @@ function addMultiFilterControls(onChange: () => void) {
   const pinsCheckboxSection = createFilterCheckboxes(
     pinItems, activePointTypes, pinCheckboxes, onChange
   );
+  pinsHeader.bodyEl.appendChild(pinsCheckboxSection);
 
-  pinsLegend.appendChild(pinsButtonSection);
-  pinsLegend.appendChild(pinsCheckboxSection);
+  // Mount panels
+  mainContainer.appendChild(connectionsLegend);
   mainContainer.appendChild(pinsLegend);
-
   document.body.appendChild(mainContainer);
+
+  // Floating button toggles the whole window
+  floatingBtn.onclick = () => {
+    toggleDisplay(mainContainer);
+  };
 }
+
 
 // ---------------------- Clicked Coordinates Display ----------------------
 
@@ -528,16 +650,21 @@ function updateCoordinatesUI(lat: number | null, lng: number | null) {
 // ---------------------- Initialization ----------------------
 
 function initMap(): void {
-  const map = new google.maps.Map(
+   const map = new google.maps.Map(
     document.getElementById("map") as HTMLElement,
     {
       center: { lat: 39.5, lng: -98.35 },
       zoom: 4,
       tilt: 30,
-      mapId: "90f87356969d889c",
+      mapId: "90f87356969d889c", // you can keep or remove this if not needed
       styles: [
-        { featureType: "administrative.province", elementType: "labels", stylers: [{ visibility: "off" }] },
-        { featureType: "administrative.province", elementType: "geometry.stroke", stylers: [{ visibility: "on" }] }
+        { featureType: "all", elementType: "labels", stylers: [{ visibility: "off" }] },
+        { featureType: "road", elementType: "all", stylers: [{ visibility: "off" }] },
+        { featureType: "poi", elementType: "all", stylers: [{ visibility: "off" }] },
+        { featureType: "administrative", elementType: "all", stylers: [{ visibility: "off" }] },
+        { featureType: "transit", elementType: "all", stylers: [{ visibility: "off" }] },
+        { featureType: "water", elementType: "labels", stylers: [{ visibility: "off" }] },
+        { featureType: "landscape", elementType: "labels", stylers: [{ visibility: "off" }] }
       ]
     }
   );
@@ -560,13 +687,28 @@ function initMap(): void {
     getTooltip: ({ object, layer }) => {
   if (!object) return null;
 
+  // Icons
+  if (layer?.id === 'aircraft-icon') {
+    const name = object?.properties?.name ?? "Icon";
+    const [lng, lat] = asLngLat(object) ?? [];
+    return {
+      html: `
+        <div style="font-family:system-ui; font-size:12px; line-height:1.35; color:white">
+          <div><b>${name}</b></div>
+          <div><b>Lat</b>: ${fmt(lat)}</div>
+          <div><b>Lng</b>: ${fmt(lng)}</div>
+        </div>
+      `
+    };
+  }
+
   // Pins
   if (layer?.id === "pins") {
     const name = object?.properties?.name ?? "Pin";
     const [lng, lat] = asLngLat(object) ?? [];
     return {
       html: `
-        <div style="font-family:system-ui; font-size:12px; line-height:1.35;">
+        <div style="font-family:system-ui; font-size:12px; line-height:1.35; color:white">
           <div><b>${name}</b></div>
           <div><b>Lat</b>: ${fmt(lat)}</div>
           <div><b>Lng</b>: ${fmt(lng)}</div>

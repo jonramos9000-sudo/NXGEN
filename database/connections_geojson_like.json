@@ -968,19 +968,6 @@
     },
     "Connection_type": "N"
   },
-{
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [-98.01890512828484, 40.368553328787335]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [-97.41490, 38.17124]
-    },
-    "Connection_type": "N"
-  },
   {
     "inbound": 0,
     "outbound": 0,

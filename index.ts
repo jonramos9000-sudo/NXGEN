@@ -462,7 +462,7 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
         getTargetColor: (d: any) => darker(colorByTypeRGBA(d)),
         getTilt: (d: any) => tiltByType(d),
         getWidth: 2,
-        pickable: true,
+        pickable: true, // Allow picking (hover, click)
         getFilterValue: getConnectionFilterValue,
         filterRange: [1, 1],
         extensions: [dataFilterExt],

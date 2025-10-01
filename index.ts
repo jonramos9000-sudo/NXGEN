@@ -43,11 +43,15 @@ const ICON_MAP = {
 
 // Style aggressively hides all map labels and most road lines to guarantee custom tooltips are visible.
 const PERMANENT_HIDE_LABELS_STYLE: google.maps.MapTypeStyle[] = [
-    // Target all label types (administrative areas, points of interest, transit)
-    { featureType: "administrative", elementType: "labels", stylers: [{ visibility: "off" }] },
+    // Hide all labels by default
+    { featureType: "all", elementType: "labels", stylers: [{ visibility: "off" }] },
+    // Then, selectively turn on city labels
+    { featureType: "administrative.locality", elementType: "labels", stylers: [{ visibility: "on" }] },
+
+    // The rest of the rules can remain to hide other features
     { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
     { featureType: "transit", elementType: "labels", stylers: [{ visibility: "off" }] },
-    
+
     // Target road labels explicitly
     { featureType: "road", elementType: "labels", stylers: [{ visibility: "off" }] },
     
@@ -55,9 +59,6 @@ const PERMANENT_HIDE_LABELS_STYLE: google.maps.MapTypeStyle[] = [
     { featureType: "road.highway", elementType: "geometry", stylers: [{ visibility: "off" }] },
     { featureType: "road.arterial", elementType: "geometry", stylers: [{ visibility: "off" }] },
     { featureType: "road.local", elementType: "geometry", stylers: [{ visibility: "off" }] },
-    
-    // Fallback for all elements
-    { featureType: "all", elementType: "labels", stylers: [{ visibility: "off" }] }
 ];
 
 // Style for a clean white map with basic labels

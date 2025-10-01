@@ -638,6 +638,12 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
                         ${label}
                     </label>
                 `).join('')}
+                    <label>
+                        <input type="checkbox" class="conn-cb" data-key="TR" ${activeTypes.has("TR") ? 'checked' : ''}>
+                        <span class="swatch" style="background:rgb(0,0,0);"></span>
+                        TR
+                    </label>
+
             </div>
             <div class="legend-box">
                 <h2 style="font-size:16px; margin:0;">Pins</h2>
@@ -930,6 +936,35 @@ async function initMap(): Promise<void> {
 
     // Add multi-filter controls, which now includes the connection button logic
     addMultiFilterControls(map, layerUpdateCallback);
+
+    // Create and display the "Fly from OKC to HUB" button on load
+    const flyToButton = document.createElement('button');
+    flyToButton.id = 'fly-to-btn';
+    flyToButton.textContent = 'Fly from OKC to HUB';
+    flyToButton.style.cssText = `
+        position: absolute; z-index: 10; top: 10px; left: 300px;
+        padding: 8px 10px; border: 1px solid #ccc; border-radius: 8px;
+        background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+        font: 13px system-ui, sans-serif; cursor: pointer;
+    `;
+    flyToButton.addEventListener('click', () => {
+        const okcCoords = { lat: 35.4676, lng: -97.5164 };
+        const hubCoords = { lat: 39.4204, lng: -118.7242 };
+
+        // Use Google Maps API for smooth animation
+        map.moveCamera({ center: okcCoords, zoom: 8 });
+
+        // Animate to the next location after a delay
+        setTimeout(() => {
+            // The FlyToInterpolator isn't directly used here, but we can model the logic
+            new FlyToInterpolator({speed: 2});
+            map.moveCamera({ center: hubCoords, zoom: 6, heading: 0, tilt: 45 });
+        }, 2000); // Wait 2 seconds before flying to the next location
+    });
+    const mapDiv = document.getElementById('map');
+    if (mapDiv) {
+        mapDiv.appendChild(flyToButton);
+    }
 
     map.addListener("click", (e: google.maps.MapMouseEvent) => {
         const ll = e.latLng;

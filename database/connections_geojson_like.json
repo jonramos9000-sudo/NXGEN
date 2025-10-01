@@ -5,6 +5,25 @@
     "from": {
       "name": "From",
       "coordinates": [
+        -118.626664,
+        39.427129
+      ]
+    },
+    "to": {
+      "name": "To",
+      "coordinates": [
+        -97.613387,
+        35.505322
+      ]
+    },
+    "Connection_type": "TR"
+  },
+  {
+    "inbound": 0,
+    "outbound": 0,
+    "from": {
+      "name": "From",
+      "coordinates": [
         -82.492696,
         27.8602
       ]

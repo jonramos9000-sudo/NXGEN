@@ -75,6 +75,27 @@ const WHITE_MAP_STYLE: google.maps.MapTypeStyle[] = [
     { featureType: "administrative", elementType: "labels", stylers: [{ visibility: "off" }] },
 ];
 
+// Style for a clean black map with white contrast
+const BLACK_MAP_STYLE: google.maps.MapTypeStyle[] = [
+    // Invert colors for a dark theme
+    { featureType: "all", elementType: "geometry", stylers: [{ color: "#212121" }] },
+    { featureType: "water", elementType: "geometry", stylers: [{ color: "#000000" }] },
+    { featureType: "road", elementType: "geometry", stylers: [{ color: "#333333" }] },
+    
+    // Style labels for white contrast
+    { featureType: "all", elementType: "labels.text.fill", stylers: [{ color: "#ffffff" }] },
+    { featureType: "all", elementType: "labels.text.stroke", stylers: [{ color: "#212121" }] },
+
+    // Hide non-essential features
+    { featureType: "poi", elementType: "all", stylers: [{ visibility: "off" }] },
+    { featureType: "transit", elementType: "all", stylers: [{ visibility: "off" }] },
+
+    // Hide road labels to remove road name icons
+    { featureType: "road", elementType: "labels", stylers: [{ visibility: "off" }] },
+
+    // Make state lines visible and white
+    { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#ffffff" }, { weight: 0.5 }] },
+];
 
 // ---------------------- Types & Data ----------------------
 
@@ -902,7 +923,7 @@ async function initMap(): Promise<void> {
             mapTypeControlOptions: {
                 style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
                 position: google.maps.ControlPosition.TOP_LEFT,
-                mapTypeIds: ["no_labels_map", "white_map", "satellite"],
+                mapTypeIds: ["no_labels_map", "white_map", "black_map", "satellite"],
             },
         }
     );
@@ -918,6 +939,12 @@ async function initMap(): Promise<void> {
         name: "White Map",
     });
     map.mapTypes.set("white_map", whiteMapType);
+
+    // Create a styled map type for the new black map
+    const blackMapType = new google.maps.StyledMapType(BLACK_MAP_STYLE, {
+        name: "Black Map",
+    });
+    map.mapTypes.set("black_map", blackMapType);
 
     map.setMapTypeId("no_labels_map"); // Set the default map type
 
@@ -942,7 +969,7 @@ async function initMap(): Promise<void> {
     flyToButton.id = 'fly-to-btn';
     flyToButton.textContent = 'Fly from OKC to HUB';
     flyToButton.style.cssText = `
-        position: absolute; z-index: 10; top: 10px; left: 300px;
+        position: absolute; z-index: 10; top: 60px; left: 280px;
         padding: 8px 10px; border: 1px solid #ccc; border-radius: 8px;
         background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,.15);
         font: 13px system-ui, sans-serif; cursor: pointer;
@@ -950,16 +977,70 @@ async function initMap(): Promise<void> {
     flyToButton.addEventListener('click', () => {
         const okcCoords = { lat: 35.4676, lng: -97.5164 };
         const hubCoords = { lat: 39.4204, lng: -118.7242 };
+        const ZOOM_DURATION = 1500; // 1.5 seconds for zoom
+        const PAN_DURATION = 4000; // 4 seconds for pan
+        const PAUSE_DURATION = 1000; // 1 second pause
 
-        // Use Google Maps API for smooth animation
-        map.moveCamera({ center: okcCoords, zoom: 8 });
+        // 1. Animate zoom into OKC
+        const zoomStartTime = performance.now();
+        const animateZoom = (currentTime: number) => {
+            const elapsedTime = currentTime - zoomStartTime;
+            const progress = Math.min(elapsedTime / ZOOM_DURATION, 1);
+            const easedProgress = 1 - Math.pow(1 - progress, 3); // easeOutCubic
 
-        // Animate to the next location after a delay
-        setTimeout(() => {
-            // The FlyToInterpolator isn't directly used here, but we can model the logic
-            new FlyToInterpolator({speed: 2});
-            map.moveCamera({ center: hubCoords, zoom: 6, heading: 0, tilt: 45 });
-        }, 2000); // Wait 2 seconds before flying to the next location
+            const currentZoom = 5 + (10 - 5) * easedProgress; // Zoom from 5 to 10
+            const currentTilt = 0 + (45 - 0) * easedProgress; // Tilt from 0 to 45
+
+            map.moveCamera({ center: okcCoords, zoom: currentZoom, tilt: currentTilt });
+
+            if (progress < 1) {
+                requestAnimationFrame(animateZoom);
+            } else {
+                // 2. After zoom is complete, pause for a moment
+                setTimeout(() => {
+                    // 3. Animate pan from OKC to HUB
+                    const panStartTime = performance.now();
+                    const animatePan = (panCurrentTime: number) => {
+                        const panElapsedTime = panCurrentTime - panStartTime;
+                        const panProgress = Math.min(panElapsedTime / PAN_DURATION, 1);
+                        const panEasedProgress = 1 - Math.pow(1 - panProgress, 3); // easeOutCubic
+
+                        // Interpolate zoom to create an "arc" effect
+                        const startZoom = 10;
+                        const midZoom = 6; // Zoom out to this level at the halfway point
+                        let currentZoom;
+
+                        if (panEasedProgress <= 0.5) {
+                            // First half: Zoom out from 10 to 6
+                            const zoomOutProgress = panEasedProgress * 2; // Map [0, 0.5] to [0, 1]
+                            currentZoom = startZoom + (midZoom - startZoom) * zoomOutProgress;
+                        } else {
+                            // Second half: Zoom in from 6 to 10
+                            const zoomInProgress = (panEasedProgress - 0.5) * 2; // Map [0.5, 1] to [0, 1]
+                            currentZoom = midZoom + (startZoom - midZoom) * zoomInProgress;
+                        }
+
+                        const currentLat = okcCoords.lat + (hubCoords.lat - okcCoords.lat) * panEasedProgress;
+                        const currentLng = okcCoords.lng + (hubCoords.lng - okcCoords.lng) * panEasedProgress;
+
+                        map.moveCamera({
+                            center: { lat: currentLat, lng: currentLng },
+                            zoom: currentZoom,
+                            tilt: 45,
+                        });
+
+                        if (panProgress < 1) {
+                            requestAnimationFrame(animatePan);
+                        }
+                    };
+                    requestAnimationFrame(animatePan);
+                }, PAUSE_DURATION);
+            }
+        };
+
+        // Set initial view and kick off the zoom animation
+        map.moveCamera({ center: okcCoords, zoom: 5, heading: 0, tilt: 0 });
+        requestAnimationFrame(animateZoom);
     });
     const mapDiv = document.getElementById('map');
     if (mapDiv) {

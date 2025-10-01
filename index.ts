@@ -60,6 +60,20 @@ const PERMANENT_HIDE_LABELS_STYLE: google.maps.MapTypeStyle[] = [
     { featureType: "all", elementType: "labels", stylers: [{ visibility: "off" }] }
 ];
 
+// Style for a clean white map with basic labels
+const WHITE_MAP_STYLE: google.maps.MapTypeStyle[] = [
+    // Make all geometry white or very light gray
+    { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+    { featureType: "water", elementType: "geometry", stylers: [{ color: "#dcdcdc" }] },
+    { featureType: "road", elementType: "geometry", stylers: [{ color: "#e0e0e0" }] },
+    // Hide non-essential features
+    { featureType: "poi", elementType: "all", stylers: [{ visibility: "off" }] },
+    { featureType: "transit", elementType: "all", stylers: [{ visibility: "off" }] },
+    // Show basic labels
+    { featureType: "administrative", elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+    { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+];
+
 
 // ---------------------- Types & Data ----------------------
 
@@ -604,7 +618,7 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
 
     const controlsContainer = document.createElement('div');
     controlsContainer.innerHTML = `
-        <button id="filters-toggle" title="Show/Hide filters" style="position: absolute; z-index: 10; top: 10px; left: 190px; padding:8px 10px; border:1px solid #ccc; border-radius:8px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.15); font: 13px system-ui, sans-serif; cursor:pointer;">Filters</button>
+        <button id="filters-toggle" title="Show/Hide filters" style="position: absolute; z-index: 10; top: 60px; left: 220px; padding:8px 10px; border:1px solid #ccc; border-radius:8px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.15); font: 13px system-ui, sans-serif; cursor:pointer;">Filters</button>
         <div id="controls-container" style="position:absolute; z-index:5; top:60px; left:10px; font: 13px system-ui, sans-serif; display:flex; flex-direction:column; gap:10px; max-width: 200px;">
             
             <div id="connection-legend-box" class="legend-box">
@@ -874,13 +888,31 @@ async function initMap(): Promise<void> {
             zoom: 4,
             tilt: 30,
             mapId: "90f87356969d889c",
-            // Cursor logic
-            draggableCursor: 'default', 
-            draggingCursor: 'grabbing', 
-            // PERMANENTLY apply the style to hide native labels
-            styles: PERMANENT_HIDE_LABELS_STYLE 
+            draggableCursor: 'default',
+            draggingCursor: 'grabbing',
+            // Enable map type control to switch between styles
+            mapTypeControl: true,
+            mapTypeControlOptions: {
+                style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+                position: google.maps.ControlPosition.TOP_LEFT,
+                mapTypeIds: ["no_labels_map", "white_map", "satellite"],
+            },
         }
     );
+
+    // Create a styled map type for the default view (no labels)
+    const noLabelsMapType = new google.maps.StyledMapType(PERMANENT_HIDE_LABELS_STYLE, {
+        name: "Map",
+    });
+    map.mapTypes.set("no_labels_map", noLabelsMapType);
+
+    // Create a styled map type for the new white map with labels
+    const whiteMapType = new google.maps.StyledMapType(WHITE_MAP_STYLE, {
+        name: "White Map",
+    });
+    map.mapTypes.set("white_map", whiteMapType);
+
+    map.setMapTypeId("no_labels_map"); // Set the default map type
 
     // Fetch and process data before rendering layers
     await preprocessData();

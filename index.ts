@@ -69,9 +69,9 @@ const WHITE_MAP_STYLE: google.maps.MapTypeStyle[] = [
     // Hide non-essential features
     { featureType: "poi", elementType: "all", stylers: [{ visibility: "off" }] },
     { featureType: "transit", elementType: "all", stylers: [{ visibility: "off" }] },
-    // Show basic labels
-    { featureType: "administrative", elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
-    { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+    // Hide street names and city labels
+    { featureType: "road", elementType: "labels", stylers: [{ visibility: "off" }] },
+    { featureType: "administrative", elementType: "labels", stylers: [{ visibility: "off" }] },
 ];
 
 

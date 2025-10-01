@@ -1,13 +1,11 @@
 /**
  * @license
  * Copyright 2021 Google LLC.
- * SPDX-License-Identifier: Apache-2.0
  *
  * Google Maps + Deck.gl integration:
- * - Connection type filters (N/C/H)
- * - Pin group filters
- * - Toggles to hide connections that touch specific coordinates (-82.492696, 27.8602) and (9.077841, 48.73448)
- * - On-map persistent labels for connections (source name/coords, target name/coords, and type) and pins (name + coordinates)
+ * - Renders connections (arcs) and points (pins, icons) on a Google Map.
+ * - Provides UI controls for filtering connections by type and pins by group.
+ * - Supports toggling persistent on-map labels for both connections and pins.
  *
  * NOTE: Native map labels are permanently hidden via map styles to prioritize custom tooltips.
  * This file has been modified to include an on-map label feature for all connections.
@@ -17,7 +15,6 @@
 declare const deck: any;
 
 import type * as GeoJSON from "geojson";
-
 // Deck.gl Layer constructors
 const ScatterplotLayer = deck.ScatterplotLayer;
 const ArcLayer = deck.ArcLayer;
@@ -41,7 +38,7 @@ const ICON_MAP = {
 
 // ---------------------- Permanent Map Style (Hides All Native Labels) ----------------------
 
-// Style aggressively hides all map labels and most road lines to guarantee custom tooltips are visible.
+/** Style to hide all native map labels and most road lines to ensure custom tooltips are visible. */
 const PERMANENT_HIDE_LABELS_STYLE: google.maps.MapTypeStyle[] = [
     // Hide all labels by default
     { featureType: "all", elementType: "labels", stylers: [{ visibility: "off" }] },
@@ -61,7 +58,7 @@ const PERMANENT_HIDE_LABELS_STYLE: google.maps.MapTypeStyle[] = [
     { featureType: "road.local", elementType: "geometry", stylers: [{ visibility: "off" }] },
 ];
 
-// Style for a clean white map with basic labels
+/** Style for a clean white map with basic labels hidden. */
 const WHITE_MAP_STYLE: google.maps.MapTypeStyle[] = [
     // Make all geometry white or very light gray
     { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
@@ -75,7 +72,7 @@ const WHITE_MAP_STYLE: google.maps.MapTypeStyle[] = [
     { featureType: "administrative", elementType: "labels", stylers: [{ visibility: "off" }] },
 ];
 
-// Style for a clean black map with white contrast
+/** Style for a clean black map with white contrast elements. */
 const BLACK_MAP_STYLE: google.maps.MapTypeStyle[] = [
     // Invert colors for a dark theme
     { featureType: "all", elementType: "geometry", stylers: [{ color: "#212121" }] },
@@ -99,6 +96,7 @@ const BLACK_MAP_STYLE: google.maps.MapTypeStyle[] = [
 
 // ---------------------- Types & Data ----------------------
 
+/** Custom properties for GeoJSON features. */
 type Properties = {
     scalerank?: number;
     Connection_type?: string;
@@ -106,6 +104,7 @@ type Properties = {
     to?: any;
     name?: string;
 };
+
 type Feature = GeoJSON.Feature<GeoJSON.Geometry, Properties>;
 type Data = GeoJSON.FeatureCollection<GeoJSON.Geometry, Properties> | any[];
 
@@ -116,13 +115,6 @@ const POINTS_DATA_URL: string = "database/points.json";
 let processedConnections: any[] = [];
 let processedPins: any[] = [];
 let processedIcons: any[] = [];
-
-// Example feature for pin display testing
-const feature = {
-    type: "Feature",
-    properties: { name: "E6" },
-    geometry: { type: "Point", coordinates: [-124.122174, 39.676226] }
-};
 
 // ---------------------- Helper Functions ----------------------
 
@@ -144,8 +136,7 @@ function getConnType(d: any): string {
 }
 
 /**
-*
-* Retrieve the name property from a feature.
+ * Retrieve the name property from a feature.
  */
 function getPointName(d: any): string {
     return getProp(d, "name") ?? "";
@@ -153,7 +144,6 @@ function getPointName(d: any): string {
 
 /**
  * Toggle display of a DOM element.
- * Retained for filter controls, but not used for the connections list anymore.
  */
 function toggleDisplay(el: HTMLElement, force?: boolean) {
     const shouldShow = force !== undefined ? force : el.style.display === "none";
@@ -162,6 +152,7 @@ function toggleDisplay(el: HTMLElement, force?: boolean) {
 
 // ---------------------- Pin Type Logic ----------------------
 
+/** Defines the possible color-coded groups for pins. */
 type PointType =
     | "YELLOW_GROUP"
     | "PURPLE_GROUP"
@@ -175,7 +166,7 @@ type PointType =
     | "WHITE_GROUP";
 
 /**
- * Pin group logic for mapping pin names to colors and types.
+ * Encapsulates pin group logic for mapping pin names to colors and types.
  */
 const PinLogic = {
     ALL_POINT_TYPES: [
@@ -273,9 +264,9 @@ type ConnType = "N" | "C" | "HF";
 const ALL_TYPES: ConnType[] = ["N", "C", "HF"];
 let activeTypes = new Set<ConnType>(["HF"]); // Initial active type set
 
-// NEW GLOBAL STATE: Flag to control visibility of on-map connection labels
+/** Flag to control visibility of on-map connection labels. */
 let showConnectionLabels = false;
-// NEW GLOBAL STATE: Flag to control visibility of on-map pin labels
+/** Flag to control visibility of on-map pin labels. */
 let showPinLabels = false;
 
 /**
@@ -327,13 +318,6 @@ function getTargetPos(d: any): [number, number] {
 }
 
 /**
- * Return a darker shade of the given RGBA color.
- */
-function darker([r, g, b, a]: [number, number, number, number]): [number, number, number, number] {
-    return [Math.floor(r * 0.5), Math.floor(g * 0.5), Math.floor(b * 0.5), a ?? 255];
-}
-
-/**
  * Format a number to a string with fixed decimal places.
  */
 function fmt(n?: number, p = 5) {
@@ -358,7 +342,7 @@ function asLngLat(obj: any): [number, number] | null {
 }
 
 /**
- * Calculates a point along the arc's chord, used as the label position.
+ * Calculates the midpoint of a connection's chord, used as the label position.
  * For simple line layers, this is the midpoint.
  */
 function getLabelMidpoint(d: any): [number, number] {
@@ -376,13 +360,13 @@ function getLabelMidpoint(d: any): [number, number] {
 
 // ---------------------- Filtering (GPU) ----------------------
 
-// Hub coordinates
+// Coordinates for specific locations used in filtering.
 const HUB_LNG 	= -82.492696;
 const HUB_LAT 	= 27.8602;
 const HUB_EPS 	= 1e-6;
 let hideHubConnections = false;
 
-const HUB2_LNG = 9.077841;
+const HUB2_LNG = 9.077841; // EU
 const HUB2_LAT = 48.734481;
 let hideHub2Connections = false;
 let showIcons = true;
@@ -425,7 +409,7 @@ let overlay: any;
 const dataFilterExt = new deck.DataFilterExtension({ filterSize: 1 });
 
 /**
- * Generate a key representing the current filter state for Deck.gl update triggers.
+ * Generates a key representing the current filter state for Deck.gl update triggers.
  */
 function filterKey() {
     return [
@@ -441,7 +425,7 @@ function filterKey() {
 // ---------------------- Build Layers ----------------------
 
 /**
- * Build and return all Deck.gl layers for the overlay.
+ * Constructs and returns all Deck.gl layers for the map overlay.
  */
 function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) {
     // Shared filtering logic for connections, used by both ArcLayer and Connection TextLayer
@@ -452,14 +436,14 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
             (!hideHub2Connections || !d._isHub2)
         ) ? 1 : 0;
 
-    // Connection arcs
+    // Layer for the main connection lines (arcs).
     const connectionsLayer = new ArcLayer({
         id: "flights",
         data: connectionsData,
         getSourcePosition: (d: any) => getSourcePos(d),
         getTargetPosition: (d: any) => getTargetPos(d),
-        getSourceColor: (d: any) => colorByTypeRGBA(d),
-        getTargetColor: (d: any) => darker(colorByTypeRGBA(d)),
+        getSourceColor: colorByTypeRGBA,
+        getTargetColor: (d: any) => colorByTypeRGBA(d), // Use same color for target for a solid line
         getTilt: (d: any) => tiltByType(d),
         getWidth: 2,
         pickable: true, // Allow picking (hover, click)
@@ -470,25 +454,7 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
         updateTriggers: { getFilterValue: filterKey() }
     });
 
-    // Add a "glow" layer behind the main connection lines
-    const glowLayer = new ArcLayer({
-        id: 'flights-glow',
-        data: connectionsData,
-        getSourcePosition: (d: any) => getSourcePos(d),
-        getTargetPosition: (d: any) => getTargetPos(d),
-        getSourceColor: (d: any) => { const [r, g, b] = colorByTypeRGBA(d); return [r, g, b, 80]; }, // Use base color with low alpha
-        getTargetColor: (d: any) => { const [r, g, b] = darker(colorByTypeRGBA(d)); return [r, g, b, 0]; }, // Fade out glow at target
-        getTilt: () => 0, // Make the glow layer flat on the map
-        getWidth: 7, // Make the glow wider than the main line
-        greatCircle: true,
-        pickable: false,
-        getFilterValue: getConnectionFilterValue,
-        filterRange: [1, 1],
-        extensions: [dataFilterExt],
-        updateTriggers: { getFilterValue: filterKey() }
-    });
-
-    // Layer for Connection Labels (FIX: Force SDF, set characterSet, increase size)
+    // Layer for persistent on-map connection labels.
     const connectionTextLayer = new TextLayer({
         id: 'connection-labels',
         // Only display connections if showConnectionLabels is true
@@ -508,8 +474,7 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
             const [flng, flat] = asLngLat(fromObj) ?? [0, 0];
             const [tlng, tlat] = asLngLat(toObj) 	?? [0, 0];
             
-            // Multi-line string with highlighting for Start/End and coordinates
-            // Using \u25b6 as the START/END marker
+            // Multi-line string with start/end points, coordinates, and type.
             return `\u25b6 START: ${fromName}\nLat: ${fmt(flat, 4)}, Lng: ${fmt(flng, 4)}\n\u25b6 END: ${toName}\nLat: ${fmt(tlat, 4)}, Lng: ${fmt(tlng, 4)}\n(${connType})`;
         },
         // Use background for the black box effect
@@ -517,14 +482,12 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
         getBackgroundColor: [0, 0, 0, 200], // Black background (Opacity 200/255)
         getColor: [255, 255, 255, 255], 		// White text
         
-        // --- TEXT RENDERING FIXES ---
+        // Text rendering settings for clarity and performance.
         getSize: 12, // Increased from 10
         fontSettings: {
             sdf: true // Use Signed Distance Field textures for robustness
         },
-        // Explicitly list all characters used in the label for robust texture atlas generation
         characterSet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,:()[]- \n\u25b6', 
-        // -----------------------------
         
         getPixelOffset: [0, -10], // Offset to appear slightly above the line
         getAlignmentBaseline: 'center',
@@ -537,7 +500,7 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
         extensions: [dataFilterExt],
         updateTriggers: { getFilterValue: filterKey() },
         
-        // Ensure connection labels are drawn on top of everything
+        // Ensure connection labels are drawn on top of other layers.
         getZLevel: 2, 
         parameters: {
             depthTest: false, // Disables depth culling so the TextLayer is always visible
@@ -545,7 +508,7 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
         }
     });
 
-    // Pin scatterplot
+    // Layer for circular "pin" markers.
     const pinsLayer = new ScatterplotLayer({
         id: "pins",
         data: pinsData,
@@ -565,7 +528,7 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
         updateTriggers: { getFilterValue: filterKey() }
     });
 
-    // Icon layer for aircraft/boat/truck/trailer pins
+    // Layer for custom icons (e.g., airplane, boat).
     const icons = new deck.IconLayer({
         id: 'aircraft-icon',
         data: iconsData,
@@ -596,7 +559,7 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
         }
     });
 
-    // TextLayer for persistent Pin Labels (name, lat, and lng)
+    // Layer for persistent on-map pin labels.
     const pinTextLayer = new TextLayer({
         id: 'pin-labels',
         // Only display if showPinLabels is true
@@ -629,14 +592,13 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
         }
     });
 
-    // Connection text layer should be listed after the ArcLayer, but before the Pin layers for depth ordering
-    return [glowLayer, connectionsLayer, connectionTextLayer, pinsLayer, icons, pinTextLayer];
+    return [connectionsLayer, connectionTextLayer, pinsLayer, icons, pinTextLayer];
 }
 
 // ---------------------- UI: Legend and Controls ----------------------
 
 /**
- * Add UI panels for multi-filter controls (connections and pins).
+ * Adds UI panels for multi-filter controls (connections and pins) to the document.
  */
 function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
     const connItems: { key: ConnType; label: string; color: string }[] = [
@@ -679,7 +641,7 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
                     </label>
                 `).join('')}
                     <label>
-                        <input type="checkbox" class="conn-cb" data-key="TR" ${activeTypes.has("TR") ? 'checked' : ''}>
+                        <input type="checkbox" class="conn-cb" data-key="TR" ${activeTypes.has("TR" as ConnType) ? 'checked' : ''}>
                         <span class="swatch" style="background:rgb(0,0,0);"></span>
                         TR
                     </label>
@@ -734,7 +696,7 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
     `;
     document.body.appendChild(controlsContainer);
 
-    // --- NEW: Add the Connection Details Button to its new location ---
+    // Add the "Show Details" button for connection labels to the controls panel.
     const connButtonSection = document.getElementById('conn-button-section');
     const connLabelButton = document.createElement('button');
     connLabelButton.id = 'toggle-conn-labels-btn';
@@ -744,9 +706,8 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         // Append the new button after the "All/None" button
         connButtonSection.appendChild(connLabelButton);
     }
-    // --- END NEW ---
 
-    // --- Attach Event Listeners ---
+    // Attach all event listeners for the control panel.
     document.getElementById('filters-toggle')?.addEventListener('click', () => {
         const container = document.getElementById('controls-container');
         if (container) toggleDisplay(container);
@@ -789,7 +750,6 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         connLabelButton.textContent = showConnectionLabels ? 'Hide Details' : 'Show Details';
         updateMap();
     });
-    // --- END Connection Button Logic ---
 
 
     document.getElementById('all-pins-btn')?.addEventListener('click', () => {
@@ -821,21 +781,10 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
     });
 }
 
-// ---------------------- Connection Label Button UI (REMOVED: Now handled in addMultiFilterControls) ----------------------
-
-/**
- * Add the "Show Connection Types" button to the DOM and manage the connection TextLayer visibility.
- */
-function addConnectionsPanelUI(onChange: () => void) {
-    // This function is now empty as the button logic has been moved to addMultiFilterControls
-    // It remains as a placeholder to avoid breaking the calling structure in initMap
-}
-
-
 // ---------------------- Clicked Coordinates Display ----------------------
 
 /**
- * Add UI panel to display coordinates of last map click.
+ * Adds a UI panel to display the coordinates of the last map click.
  */
 function addCoordinatesUI() {
     const coordsContainer = document.createElement("div");
@@ -877,7 +826,7 @@ function addCoordinatesUI() {
 }
 
 /**
- * Update displayed map click coordinates in the UI.
+ * Updates the displayed map click coordinates in the UI panel.
  */
 function updateCoordinatesUI(lat: number | null, lng: number | null) {
     const latEl = document.getElementById("lat-display");
@@ -891,7 +840,7 @@ function updateCoordinatesUI(lat: number | null, lng: number | null) {
 // ---------------------- Data Pre-processing ----------------------
 
 /**
- * Fetches and pre-processes data to optimize rendering.
+ * Fetches and pre-processes connection and point data to optimize rendering.
  * This computes values once on load rather than on every render.
  */
 async function preprocessData() {
@@ -925,7 +874,7 @@ async function preprocessData() {
 // ---------------------- Initialization ----------------------
 
 /**
- * Initialize Google Map, Deck.gl overlay, controls, and event listeners.
+ * Initializes the Google Map, Deck.gl overlay, UI controls, and event listeners.
  */
 async function initMap(): Promise<void> {
     const map = new google.maps.Map(
@@ -977,10 +926,7 @@ async function initMap(): Promise<void> {
 
     // Add UI components
     addCoordinatesUI();
-    // addConnectionsPanelUI is now a NO-OP, but keeps the calling structure
-    addConnectionsPanelUI(layerUpdateCallback); 
-
-    // Add multi-filter controls, which now includes the connection button logic
+    // Add multi-filter controls, which includes all filtering and label toggles.
     addMultiFilterControls(map, layerUpdateCallback);
 
     // Create and display the "Fly from OKC to HUB" button on load
@@ -1000,7 +946,7 @@ async function initMap(): Promise<void> {
         const PAN_DURATION = 4000; // 4 seconds for pan
         const PAUSE_DURATION = 1000; // 1 second pause
 
-        // 1. Animate zoom into OKC
+        // 1. Animate zoom into OKC.
         const zoomStartTime = performance.now();
         const animateZoom = (currentTime: number) => {
             const elapsedTime = currentTime - zoomStartTime;
@@ -1015,9 +961,9 @@ async function initMap(): Promise<void> {
             if (progress < 1) {
                 requestAnimationFrame(animateZoom);
             } else {
-                // 2. After zoom is complete, pause for a moment
+                // 2. After zoom is complete, pause.
                 setTimeout(() => {
-                    // 3. Animate pan from OKC to HUB
+                    // 3. Animate pan from OKC to HUB with a zoom-out/zoom-in effect.
                     const panStartTime = performance.now();
                     const animatePan = (panCurrentTime: number) => {
                         const panElapsedTime = panCurrentTime - panStartTime;
@@ -1057,7 +1003,7 @@ async function initMap(): Promise<void> {
             }
         };
 
-        // Set initial view and kick off the zoom animation
+        // Set initial view and kick off the animation.
         map.moveCamera({ center: okcCoords, zoom: 5, heading: 0, tilt: 0 });
         requestAnimationFrame(animateZoom);
     });
@@ -1075,11 +1021,11 @@ async function initMap(): Promise<void> {
     overlay = new GoogleMapsOverlay({
         layers: buildLayers(processedConnections, processedPins, processedIcons),
         
-        // getTooltip remains for hover-based tooltips
+        // Tooltip displayed on hover.
         getTooltip: ({ object, layer }) => {
             if (!object) return null;
             
-            // Tooltips for pins and icons (these are the hover tooltips)
+            // Tooltip for pins and icons.
             if (layer?.id === 'aircraft-icon' || layer?.id === "pins") {
                 const name = object?.properties?.name ?? (layer?.id === "pins" ? "Pin" : "Icon");
                 const [lng, lat] = asLngLat(object) ?? [];
@@ -1094,7 +1040,7 @@ async function initMap(): Promise<void> {
                 };
             }
             
-            // Tooltips for connections
+            // Tooltip for connections.
             const fromObj = object?.from ?? object?.properties?.from;
             const toObj 	= object?.to 	?? object?.properties?.to;
             const fromName = fromObj?.name ?? "From";
@@ -1126,7 +1072,7 @@ async function initMap(): Promise<void> {
     overlay.setMap(map);
 }
 
-// Export initMap globally for the Maps API to call it.
+// Export initMap to the global window object for the Maps API to call it.
 declare global {
     interface Window {
         initMap: () => void;

@@ -463,6 +463,25 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
         getTilt: (d: any) => tiltByType(d),
         getWidth: 2,
         pickable: true, // Allow picking (hover, click)
+        greatCircle: true,
+        getFilterValue: getConnectionFilterValue,
+        filterRange: [1, 1],
+        extensions: [dataFilterExt],
+        updateTriggers: { getFilterValue: filterKey() }
+    });
+
+    // Add a "glow" layer behind the main connection lines
+    const glowLayer = new ArcLayer({
+        id: 'flights-glow',
+        data: connectionsData,
+        getSourcePosition: (d: any) => getSourcePos(d),
+        getTargetPosition: (d: any) => getTargetPos(d),
+        getSourceColor: (d: any) => { const [r, g, b] = colorByTypeRGBA(d); return [r, g, b, 80]; }, // Use base color with low alpha
+        getTargetColor: (d: any) => { const [r, g, b] = darker(colorByTypeRGBA(d)); return [r, g, b, 0]; }, // Fade out glow at target
+        getTilt: () => 0, // Make the glow layer flat on the map
+        getWidth: 7, // Make the glow wider than the main line
+        greatCircle: true,
+        pickable: false,
         getFilterValue: getConnectionFilterValue,
         filterRange: [1, 1],
         extensions: [dataFilterExt],
@@ -611,7 +630,7 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
     });
 
     // Connection text layer should be listed after the ArcLayer, but before the Pin layers for depth ordering
-    return [connectionsLayer, connectionTextLayer, pinsLayer, icons, pinTextLayer];
+    return [glowLayer, connectionsLayer, connectionTextLayer, pinsLayer, icons, pinTextLayer];
 }
 
 // ---------------------- UI: Legend and Controls ----------------------

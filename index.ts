@@ -185,15 +185,15 @@ const PinLogic = {
         "Point 13": "YELLOW_GROUP",
         "E6": "YELLOW_GROUP",
         "Point 6": "YELLOW_GROUP",
+        "Beale HFCGS": "YELLOW_GROUP",
 
         // PURPLE_GROUP
         "Support Team": "PURPLE_GROUP",
 
-        // ORANGE_GROUP
-        "B": "ORANGE_GROUP",
-
         // GREEN_GROUP
+        "Bale HFCGS": "GREEN_GROUP",
         "M": "GREEN_GROUP",
+        "NE": "GREEN_GROUP",
 
         // RED_GROUP
         "HUB-112": "RED_GROUP",
@@ -245,13 +245,13 @@ function getPinType(d: any): PointType {
  * Get RGBA color for a pin feature based on type.
  */
 function colorPinkByType(d: any): [number, number, number, number] {
-    return PinLogic.PIN_COLOR_MAP[getPinType(d)];
+    return PinLogic.PIN_COLOR_MAP[getPinType(d)] ?? [0, 120, 255, 220]; // Default to BLUE_GROUP color
 }
 
 // ---------------------- Connection Styling & Labeling ----------------------
 
 type ConnType = "N" | "C" | "HF";
-const ALL_TYPES: string[] = ["N", "C", "HF", "RT"];
+const ALL_TYPES: string[] = ["N", "C", "HF", "RT", "TR"];
 let activeTypes = new Set<string>(); // Initial active type set
 
 /** Flag to control visibility of on-map connection labels. */
@@ -584,7 +584,11 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
     ];
 
     const controlsContainer = document.createElement('div');
-    controlsContainer.innerHTML = `
+    controlsContainer.innerHTML = ``;
+    document.body.appendChild(controlsContainer);
+
+    const controlsAndButtonContainer = document.createElement('div');
+    controlsAndButtonContainer.innerHTML = `
         <button id="filters-toggle" title="Show/Hide filters" style="position: absolute; z-index: 10; top: 60px; left: 220px; padding:8px 10px; border:1px solid #ccc; border-radius:8px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.15); font: 13px system-ui, sans-serif; cursor:pointer;">Filters</button>
         <div id="controls-container" style="position:absolute; z-index:5; top:60px; left:10px; font: 13px system-ui, sans-serif; display:flex; flex-direction:column; gap:10px; max-width: 200px;">
             
@@ -657,11 +661,16 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
             .swatch { display:inline-block; width:8px; height:8px; border-radius:2px; border:1px solid rgba(0,0,0,.2); } 
         </style>
     `;
-    document.body.appendChild(controlsContainer);
+    document.body.appendChild(controlsAndButtonContainer);
 
     // Add the "Show Details" button for connection labels to the controls panel.
     const connButtonSection = document.getElementById('conn-button-section');
     const connLabelButton = document.createElement('button');
+
+    // Add additional pins to the processed list
+    for (const pinName in PinLogic.ADDITIONAL_PINS) {
+        processedPins.push({ ...PinLogic.ADDITIONAL_PINS[pinName], _pinType: getPinType(PinLogic.ADDITIONAL_PINS[pinName]) });
+    }
     connLabelButton.id = 'toggle-conn-labels-btn';
     connLabelButton.textContent = showConnectionLabels ? 'Hide Details' : 'Show Details';
     connLabelButton.title = 'Toggle on-map connection details (Source/Target Names & Coords)';
@@ -808,12 +817,25 @@ async function preprocessData() {
     ]);
 
     // Pre-process connections
-    processedConnections = connectionsJson.map((c: any) => ({
-        ...c,
-        _connType: getConnType(c),
-        _isHub1: connectsToHub(c),
-        _isHub2: connectsToHub2(c),
-    }));
+    processedConnections = connectionsJson
+        .filter((c: any) => {
+            const connType = getConnType(c);
+            if (connType === 'TR') {
+                const fromName = getProp(c, "from")?.name;
+                const toLng = getTargetPos(c)?.[0];
+                if (toLng == null) return true; // Keep if destination is unknown
+
+                // Mississippi River is approximately at -90 longitude
+                if (fromName === 'Ohio Pin') {
+                    return toLng > -90; // East
+                }
+                if (fromName === 'HUB-112') {
+                    return toLng < -90; // West
+                }
+            }
+            return true; // Keep all other connections
+        })
+        .map((c: any) => ({ ...c, _connType: getConnType(c), _isHub1: connectsToHub(c), _isHub2: connectsToHub2(c) }));
 
     // Pre-process and split points into pins and icons
     const allPoints = (pointsJson?.type === "FeatureCollection" ? pointsJson.features : pointsJson);

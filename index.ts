@@ -148,7 +148,8 @@ type PointType =
     | "VIOLET_GROUP"
     | "BLUE_GROUP"
     | "PINK_GROUP"
-    | "WHITE_GROUP";
+    | "WHITE_GROUP"
+    | "OKC_GROUP";
 
 /**
  * Encapsulates pin group logic for mapping pin names to colors and types.
@@ -157,7 +158,7 @@ const PinLogic = {
     ALL_POINT_TYPES: [
         "RED_GROUP", "TURQUOISE_GROUP", "YELLOW_GROUP", "GREEN_GROUP",
         "PURPLE_GROUP", "ORANGE_GROUP", "BLUE_GROUP", "VIOLET_GROUP", "PINK_GROUP", "WHITE_GROUP"
-    ] as PointType[],
+    , "OKC_GROUP"] as PointType[],
 
     // RGBA color map for each pin group
     PIN_COLOR_MAP: {
@@ -171,7 +172,8 @@ const PinLogic = {
         VIOLET_GROUP:    [130, 42, 245, 220],
         PINK_GROUP:      [255, 105, 180, 220],
         WHITE_GROUP:     [197, 110, 255, 255]
-    } as Record<PointType, [number, number, number, number]>,
+    ,
+        OKC_GROUP:       [0, 255, 255, 220]} as Record<PointType, [number, number, number, number]>,
 
     // Pin name to group mapping
     PIN_LOOKUP_MAP: {
@@ -222,8 +224,10 @@ const PinLogic = {
         "Jim Creek": "WHITE_GROUP",
         "La Moure": "WHITE_GROUP",
         "Norfolk": "WHITE_GROUP",
-        "Yokosuka": "WHITE_GROUP",
-        "Oklahoma City": "WHITE_GROUP"
+        "Yokosuka": "WHITE_GROUP"
+    ,
+
+        "Oklahoma City": "OKC_GROUP"
     } as Record<string, PointType>,
 };
 
@@ -572,7 +576,8 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         { key: "PURPLE_GROUP", 		label: "T", 	color: "rgb(128, 0, 128)" },
         { key: "ORANGE_GROUP", 		label: "B", 	color: "rgb(255, 165, 0)" },
         { key: "BLUE_GROUP", 		label: "S", 	color: "rgb(0, 120, 255)" },
-        { key: "WHITE_GROUP", 		label: "W", 	color: "rgb(197, 110, 255)" }
+        { key: "WHITE_GROUP", 		label: "W", 	color: "rgb(197, 110, 255)" },
+        { key: "OKC_GROUP",         label: "OKC",   color: "rgb(0, 255, 255)" }
     ];
 
     const controlsContainer = document.createElement('div');
@@ -995,7 +1000,7 @@ async function initMap(): Promise<void> {
         // Step 1: Turn off all filters, reveal OKC pin, and center camera.
         activeTypes.clear();
         activePointTypes.clear();
-        activePointTypes.add("WHITE_GROUP"); // "Oklahoma City" is in WHITE_GROUP
+        activePointTypes.add("OKC_GROUP"); // "Oklahoma City" is in OKC_GROUP
         const okcPin = processedPins.find(p => getPointName(p) === "Oklahoma City");
         if (okcPin) {
             const okcCoords = asLngLat(okcPin);
@@ -1010,6 +1015,10 @@ async function initMap(): Promise<void> {
         await delay(2000); // Wait for 2 seconds
 
         // Step 2: Reveal TR connections and S pins.
+        // Zoom out to show the continental US
+        map.panTo({ lat: 39.8283, lng: -98.5795 });
+        map.setZoom(5);
+
         activeTypes.add("TR" as ConnType);
         activePointTypes.add("BLUE_GROUP"); // 'S' pins are in BLUE_GROUP
         updateCheckboxes();

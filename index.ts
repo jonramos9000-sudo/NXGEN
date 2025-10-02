@@ -196,7 +196,7 @@ const PinLogic = {
         "M": "GREEN_GROUP",
 
         // RED_GROUP
-        "HUB": "RED_GROUP",
+        "HUB-112": "RED_GROUP",
         "Ohio Pin": "RED_GROUP",
 
         // TURQUOISE_GROUP
@@ -251,8 +251,8 @@ function colorPinkByType(d: any): [number, number, number, number] {
 // ---------------------- Connection Styling & Labeling ----------------------
 
 type ConnType = "N" | "C" | "HF";
-const ALL_TYPES: ConnType[] = ["N", "C", "HF"];
-let activeTypes = new Set<ConnType>(); // Initial active type set
+const ALL_TYPES: string[] = ["N", "C", "HF", "RT"];
+let activeTypes = new Set<string>(); // Initial active type set
 
 /** Flag to control visibility of on-map connection labels. */
 let showConnectionLabels = false;
@@ -267,7 +267,8 @@ function colorByTypeRGBA(d: any): [number, number, number, number] {
         case "N": return [0, 128, 200, 220]; // Blue
         case "TR": return [255, 165, 0, 220]; // Orange
         case "C": return [0, 200, 0, 220];
-        case "HF": return [200, 0, 0, 220];
+        case "RT": return [200, 0, 0, 220]; // Now Red
+        case "HF": return [255, 105, 180, 220]; // Now Pink
         default: 	return [128, 128, 128, 200];
     }
 }
@@ -565,7 +566,8 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
     const connItems: { key: ConnType; label: string; color: string }[] = [
         { key: "N", 	label: "N", 	color: "rgb(0,128,200)" }, // Blue
         { key: "C", 	label: "C", 	color: "rgb(0,200,0)" },
-        { key: "HF", label: "HF", color: "rgb(200,0,0)" }
+        { key: "RT",    label: "RT",    color: "rgb(200,0,0)" }, // Now Red
+        { key: "HF", label: "HF", color: "rgb(255,105,180)" } // Now Pink
     ];
     const pinItems: { key: PointType; label: string; color: string }[] = [
         { key: "PINK_GROUP", 	 	label: "F", 	color: "rgb(255, 105, 180)" },
@@ -603,7 +605,7 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
                     </label>
                 `).join('')}
                     <label>
-                        <input type="checkbox" class="conn-cb" data-key="TR" ${activeTypes.has("TR" as ConnType) ? 'checked' : ''}>
+                        <input type="checkbox" class="conn-cb" data-key="TR" ${activeTypes.has("TR") ? 'checked' : ''}>
                         <span class="swatch" style="background:rgb(255, 165, 0);"></span>
                         TR
                     </label>
@@ -699,7 +701,7 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
 
     document.querySelectorAll<HTMLInputElement>('.conn-cb').forEach(cb => {
         cb.addEventListener('change', () => {
-            const key = cb.dataset.key as ConnType;
+            const key = cb.dataset.key as string;
             if (cb.checked) activeTypes.add(key); else activeTypes.delete(key);
             updateMap();
         });
@@ -992,43 +994,40 @@ async function initMap(): Promise<void> {
      * Runs an automated demonstration sequence with delays.
      */
     async function runDemonstration() {
-        newButton.disabled = true;
-        newButton.textContent = "Running Demo...";
-
         // Helper to pause execution
         const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+        newButton.disabled = true;
+        newButton.textContent = "Running Demo...";
 
         // Step 1: Turn off all filters, reveal OKC pin, and center camera.
         activeTypes.clear();
         activePointTypes.clear();
         activePointTypes.add("OKC_GROUP"); // "Oklahoma City" is in OKC_GROUP
         const okcPin = processedPins.find(p => getPointName(p) === "Oklahoma City");
-        if (okcPin) {
-            const okcCoords = asLngLat(okcPin);
-            if (okcCoords) {
-                map.panTo({ lat: okcCoords[1], lng: okcCoords[0] });
-                map.setZoom(6);
-            }
+        const okcCoords = okcPin && 'geometry' in okcPin && okcPin.geometry.type === 'Point' ? asLngLat(okcPin) : null;
+        if (okcCoords) {
+            map.panTo({ lat: okcCoords[1], lng: okcCoords[0] });
+            map.setZoom(6);
         }
         updateCheckboxes();
         layerUpdateCallback();
 
         await delay(2000); // Wait for 2 seconds
 
-        // Step 2: Reveal TR connections and S pins.
-        // Zoom out to show the continental US
-        map.panTo({ lat: 39.8283, lng: -98.5795 });
+        // Step 2: Reveal P nodes and RT connections
+        activePointTypes.add("RED_GROUP"); // 'P' pins are in RED_GROUP
         map.setZoom(5);
-
-        activeTypes.add("TR" as ConnType);
-        activePointTypes.add("BLUE_GROUP"); // 'S' pins are in BLUE_GROUP
+        activeTypes.add("RT");
         updateCheckboxes();
         layerUpdateCallback();
 
         await delay(2000); // Wait for another 2 seconds
 
-        // Step 3: Reveal P pins.
-        activePointTypes.add("RED_GROUP"); // 'P' pins are in RED_GROUP
+        // Step 3: Zoom out further, reveal S pins and TR connections
+        map.setZoom(4); // Zoom out further
+        activePointTypes.add("BLUE_GROUP"); // 'S' pins are in BLUE_GROUP
+        activeTypes.add("TR");
         updateCheckboxes();
         layerUpdateCallback();
 

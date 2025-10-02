@@ -1,7 +1,7 @@
 {
   "type": "FeatureCollection",
   "features": [
-    { "type": "Feature", "properties": { "name": "HUB", "icon":"trailer" }, "geometry": { "type": "Point", "coordinates": [-118.7242, 39.4204] } },
+    { "type": "Feature", "properties": { "name": "HUB-112", "icon":"trailer" }, "geometry": { "type": "Point", "coordinates": [-118.7242, 39.4204] } },
     { "type": "Feature", "properties": { "name": "Point 2" }, "geometry": { "type": "Point", "coordinates": [-94.2203, 35.2012] } },
     { "type": "Feature", "properties": { "name": "Point 3" }, "geometry": { "type": "Point", "coordinates": [-73.1462, 44.4773] } },
     { "type": "Feature", "properties": { "name": "Point 4" }, "geometry": { "type": "Point", "coordinates": [-86.68194, 36.12667] } },
@@ -50,7 +50,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Hub" },
+      "properties": { "name": "HUB-122"},
       "geometry": { "type": "Point", "coordinates": [-118.886914, 36.835072] }
     },
     {

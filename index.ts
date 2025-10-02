@@ -107,7 +107,7 @@ let processedPins: any[] = [];
  * Retrieve a property from an object, optionally checking nested 'properties'.
  */
 function getProp(d: any, key: string): any {
-    return d?.[key] ?? d?.properties?.[key] ?? d?.connectionType;
+    return d?.[key] ?? d?.properties?.[key];
 }
 
 /**
@@ -297,7 +297,7 @@ function tiltByType(d: any): number {
  * Get source coordinates for a connection feature.
  */
 function getSourcePos(d: any): [number, number] {
-    const src = d._sourcePos ?? getProp(d, "from")?.coordinates ?? getProp(d, "coordinates")?.[0];
+    const src = d._sourcePos ?? getProp(d, "from")?.geometry?.coordinates ?? getProp(d, "coordinates")?.[0];
     return src as [number, number];
 }
 
@@ -305,7 +305,7 @@ function getSourcePos(d: any): [number, number] {
  * Get target coordinates for a connection feature.
  */
 function getTargetPos(d: any): [number, number] {
-    const tgt = d._targetPos ?? getProp(d, "to")?.coordinates ?? getProp(d, "coordinates")?.slice(-1)[0];
+    const tgt = d._targetPos ?? getProp(d, "to")?.geometry?.coordinates ?? getProp(d, "coordinates")?.slice(-1)[0];
     return tgt as [number, number];
 }
 
@@ -816,29 +816,58 @@ async function preprocessData() {
         fetch(POINTS_DATA_URL).then(res => res.json())
     ]);
 
+    // Create a lookup map for points by name for efficient access.
+    const allPoints = (pointsJson?.type === "FeatureCollection" ? pointsJson.features : pointsJson);
+    const pointMap = new Map<string, Feature>();
+    allPoints.forEach((p: Feature) => {
+        const name = getPointName(p);
+        if (name) pointMap.set(name, p);
+    });
+
+    // Add HUB2 since it's referenced in connections but not in points.json
+    pointMap.set("HUB2", {
+        type: "Feature",
+        properties: { name: "HUB2" },
+        geometry: { type: "Point", coordinates: [HUB2_LNG, HUB2_LAT] }
+    });
+
     // Pre-process connections
     processedConnections = connectionsJson
         .filter((c: any) => {
             const connType = getConnType(c);
             if (connType === 'TR') {
-                const fromName = getProp(c, "from")?.name;
-                const toLng = getTargetPos(c)?.[0];
+                const fromName = getProp(c, "from");
+                const toPoint = pointMap.get(getProp(c, "to"));
+                const toLng = toPoint?.geometry.type === 'Point' ? toPoint.geometry.coordinates[0] : undefined;
                 if (toLng == null) return true; // Keep if destination is unknown
 
                 // Mississippi River is approximately at -90 longitude
                 if (fromName === 'Ohio Pin') {
-                    return toLng > -90; // East
+                    return toLng > -90; // East of Mississippi
                 }
                 if (fromName === 'HUB-112') {
-                    return toLng < -90; // West
+                    return toLng < -90; // West of Mississippi
                 }
             }
             return true; // Keep all other connections
         })
-        .map((c: any) => ({ ...c, _connType: getConnType(c), _isHub1: connectsToHub(c), _isHub2: connectsToHub2(c) }));
+        .map((c: any) => {
+            const fromPoint = pointMap.get(getProp(c, "from"));
+            const toPoint = pointMap.get(getProp(c, "to"));
+            return {
+                ...c,
+                from: fromPoint,
+                to: toPoint,
+                _sourcePos: fromPoint?.geometry.type === 'Point' ? fromPoint.geometry.coordinates : null,
+                _targetPos: toPoint?.geometry.type === 'Point' ? toPoint.geometry.coordinates : null,
+                _connType: getConnType(c),
+                _isHub1: connectsToHub({ _sourcePos: fromPoint?.geometry.coordinates, _targetPos: toPoint?.geometry.coordinates }),
+                _isHub2: connectsToHub2({ _sourcePos: fromPoint?.geometry.coordinates, _targetPos: toPoint?.geometry.coordinates })
+            };
+        })
+        .filter(c => c._sourcePos && c._targetPos); // Filter out connections with missing points
 
     // Pre-process and split points into pins and icons
-    const allPoints = (pointsJson?.type === "FeatureCollection" ? pointsJson.features : pointsJson);
     processedPins = allPoints.map((p: any) => {
         p._pinType = getPinType(p); // Pre-calculate pin type for all points
         // All points are now treated as pins

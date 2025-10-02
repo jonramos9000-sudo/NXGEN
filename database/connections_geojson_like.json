@@ -1,1401 +1,462 @@
 [
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -82.492696,
-        27.8602
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.058841,
-        38.871856
-      ]
-    },
+    "from": "TB",
+    "to": "PENT",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -82.492696,
-        27.8602
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.058841,
-        38.871856
-      ]
-    },
+    "from": "TB",
+    "to": "PENT",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        9.077841,
-        48.734481
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.058841,
-        38.871856
-      ]
-    },
+    "from": "HUB2",
+    "to": "PENT",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        9.077841,
-        48.734481
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.058841,
-        38.871856
-      ]
-    },
+    "from": "HUB2",
+    "to": "PENT",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -157.910532,
-        21.385583
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.058841,
-        38.871856
-      ]
-    },
+    "from": "IP",
+    "to": "PENT",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -157.910532,
-        21.385583
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.058841,
-        38.871856
-      ]
-    },
+    "from": "IP",
+    "to": "PENT",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -77.419351,
-        39.733952
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.058841,
-        38.871856
-      ]
-    },
+    "from": "RR",
+    "to": "PENT",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -77.419351,
-        39.733952
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.058841,
-        38.871856
-      ]
-    },
+    "from": "RR",
+    "to": "PENT",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -95.925454,
-        41.115781
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.058841,
-        38.871856
-      ]
-    },
+    "from": "NE",
+    "to": "PENT",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -95.925454,
-        41.115781
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.058841,
-        38.871856
-      ]
-    },
+    "from": "NE",
+    "to": "PENT",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -110.35014,
-        31.5569
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.058841,
-        38.871856
-      ]
-    },
+    "from": "AZ",
+    "to": "PENT",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -110.35014,
-        31.5569
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.058841,
-        38.871856
-      ]
-    },
+    "from": "AZ",
+    "to": "PENT",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -82.492696,
-        27.8602
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -104.7000245,
-        38.8354671
-      ]
-    },
+    "from": "TB",
+    "to": "COS",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -82.492696,
-        27.8602
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -104.7000245,
-        38.8354671
-      ]
-    },
+    "from": "TB",
+    "to": "COS",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        9.077841,
-        48.734481
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -104.7000245,
-        38.8354671
-      ]
-    },
+    "from": "HUB2",
+    "to": "COS",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        9.077841,
-        48.734481
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -104.7000245,
-        38.8354671
-      ]
-    },
+    "from": "HUB2",
+    "to": "COS",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -157.910532,
-        21.385583
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -104.7000245,
-        38.8354671
-      ]
-    },
+    "from": "IP",
+    "to": "COS",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -157.910532,
-        21.385583
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -104.7000245,
-        38.8354671
-      ]
-    },
+    "from": "IP",
+    "to": "COS",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -77.058841,
-        38.871856
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -104.7000245,
-        38.8354671
-      ]
-    },
+    "from": "PENT",
+    "to": "COS",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -77.058841,
-        38.871856
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -104.7000245,
-        38.8354671
-      ]
-    },
+    "from": "PENT",
+    "to": "COS",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -77.419351,
-        39.733952
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -104.7000245,
-        38.8354671
-      ]
-    },
+    "from": "RR",
+    "to": "COS",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -77.419351,
-        39.733952
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -104.7000245,
-        38.8354671
-      ]
-    },
+    "from": "RR",
+    "to": "COS",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -95.925454,
-        41.115781
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -104.7000245,
-        38.8354671
-      ]
-    },
+    "from": "NE",
+    "to": "COS",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -95.925454,
-        41.115781
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -104.7000245,
-        38.8354671
-      ]
-    },
+    "from": "NE",
+    "to": "COS",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -110.35014,
-        31.5569
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -104.7000245,
-        38.8354671
-      ]
-    },
+    "from": "AZ",
+    "to": "COS",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -110.35014,
-        31.5569
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -104.7000245,
-        38.8354671
-      ]
-    },
+    "from": "AZ",
+    "to": "COS",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -82.492696,
-        27.8602
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.419351,
-        39.733952
-      ]
-    },
+    "from": "TB",
+    "to": "RR",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -82.492696,
-        27.8602
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.419351,
-        39.733952
-      ]
-    },
+    "from": "TB",
+    "to": "RR",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -157.910531,
-        21.385583
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.419351,
-        39.733952
-      ]
-    },
+    "from": "IP",
+    "to": "RR",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -157.910531,
-        21.385583
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.419351,
-        39.733952
-      ]
-    },
+    "from": "IP",
+    "to": "RR",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        9.077841,
-        48.734481
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.419351,
-        39.733952
-      ]
-    },
+    "from": "HUB2",
+    "to": "RR",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        9.077841,
-        48.734481
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.419351,
-        39.733952
-      ]
-    },
+    "from": "HUB2",
+    "to": "RR",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -95.925454,
-        41.115781
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.419351,
-        39.733952
-      ]
-    },
+    "from": "NE",
+    "to": "RR",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -95.925454,
-        41.115781
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.419351,
-        39.733952
-      ]
-    },
+    "from": "NE",
+    "to": "RR",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -110.35014,
-        31.5569
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.419351,
-        39.733952
-      ]
-    },
+    "from": "AZ",
+    "to": "RR",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -110.35014,
-        31.5569
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -77.419351,
-        39.733952
-      ]
-    },
+    "from": "AZ",
+    "to": "RR",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -82.492696,
-        27.8602
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -110.35014,
-        31.5569
-      ]
-    },
+    "from": "TB",
+    "to": "AZ",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -82.492696,
-        27.8602
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -110.35014,
-        31.5569
-      ]
-    },
+    "from": "TB",
+    "to": "AZ",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        9.077841,
-        48.734481
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -110.35014,
-        31.5569
-      ]
-    },
+    "from": "HUB2",
+    "to": "AZ",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        9.077841,
-        48.734481
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -110.35014,
-        31.5569
-      ]
-    },
+    "from": "HUB2",
+    "to": "AZ",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -157.910531,
-        21.385583
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -110.35014,
-        31.5569
-      ]
-    },
+    "from": "IP",
+    "to": "AZ",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -157.910531,
-        21.385583
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -110.35014,
-        31.5569
-      ]
-    },
+    "from": "IP",
+    "to": "AZ",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -95.925454,
-        41.115781
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -110.35014,
-        31.5569
-      ]
-    },
+    "from": "NE",
+    "to": "AZ",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -95.925454,
-        41.115781
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -110.35014,
-        31.5569
-      ]
-    },
+    "from": "NE",
+    "to": "AZ",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -95.925454,
-        41.115781
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -110.35014,
-        31.5569
-      ]
-    },
+    "from": "NE",
+    "to": "AZ",
     "Connection_type": "S"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -82.492696,
-        27.8602
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -95.925454,
-        41.115781
-      ]
-    },
+    "from": "TB",
+    "to": "NE",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -82.492696,
-        27.8602
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -95.925454,
-        41.115781
-      ]
-    },
+    "from": "TB",
+    "to": "NE",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        9.077841,
-        48.734481
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -95.925454,
-        41.115781
-      ]
-    },
+    "from": "HUB2",
+    "to": "NE",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        9.077841,
-        48.734481
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -95.925454,
-        41.115781
-      ]
-    },
+    "from": "HUB2",
+    "to": "NE",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -157.910531,
-        21.385583
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -95.925454,
-        41.115781
-      ]
-    },
+    "from": "IP",
+    "to": "NE",
     "Connection_type": "C"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [
-        -157.910531,
-        21.385583
-      ]
-    },
-    "to": {
-      "name": "To",
-      "coordinates": [
-        -95.925454,
-        41.115781
-      ]
-    },
+    "from": "IP",
+    "to": "NE",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "HUB",
-      "coordinates": [-118.7242, 39.4204]
-    },
-    "to": {
-      "name": "E6",
-      "coordinates": [-119.653632, 40.987996]
-    },
+    "from": "HUB-112",
+    "to": "E6",
     "Connection_type": "N"
   },
    {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "From",
-      "coordinates": [-116.76929328740175, 39.655821031300874] 
-    },
-    "to": {
-      "name": "HUB",
-      "coordinates": [-118.7242, 39.4204]
-    },
+    "from": "B",
+    "to": "HUB-112",
     "Connection_type": "N"
   },
   
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "PA",
-      "coordinates": [-77.058841,
-        38.871856] 
-    },
-    "to": {
-      "name": "nd",
-      "coordinates": [-97.378979, 47.952266]
-    },
+    "from": "PENT",
+    "to": "Point 13",
     "Connection_type": "HF"
   },
    {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "PA",
-      "coordinates": [-77.058841,
-        38.871856] 
-    },
-    "to": {
-      "name": "NE",
-      "coordinates": [-95.915086, 41.125063]
-    },
+    "from": "PENT",
+    "to": "NE",
     "Connection_type": "HF"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "nd",
-      "coordinates": [-97.378979, 47.952266]
-    },
-    "to": {
-      "name": "NE",
-      "coordinates": [-95.915086, 41.125063]
-    },
+    "from": "Point 13",
+    "to": "NE",
     "Connection_type": "HF"
   },
    {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "sb",
-      "coordinates": [-131.808665, 40.665136]
-    },
-    "to": {
-      "name": "e",
-      "coordinates": [-149.811871, 61.252815]
-    },
+    "from": "sb",
+    "to": "E",
     "Connection_type": "HF"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "sb",
-      "coordinates": [-131.808665, 40.665136]
-    },
-    "to": {
-      "name": "HI",
-      "coordinates": [-157.76579, 21.45062]
-    },
+    "from": "sb",
+    "to": "Point 9",
     "Connection_type": "HF"
   },
    {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "sb",
-      "coordinates": [-131.808665, 40.665136]
-    },
-    "to": {
-      "name": "Beale HFGCS",
-      "coordinates": [-121.3599, 39.1115]
-    },
+    "from": "sb",
+    "to": "Beale HFCGS",
     "Connection_type": "HF"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "HUB",
-      "coordinates": [-118.7242, 39.4204]
-    },
-    "to": {
-      "name": "Beale HFGCS",
-      "coordinates": [-121.3599, 39.1115]
-    },
+    "from": "HUB-112",
+    "to": "Beale HFCGS",
     "Connection_type": "HF"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "Hub",
-      "coordinates": [-117.686219, 42.078896]
-    },
-    "to": {
-      "name": "Beale HFGCS",
-      "coordinates": [-121.3599, 39.1115]
-    },
+    "from": "Hub",
+    "to": "Beale HFCGS",
     "Connection_type": "HF"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "Hub",
-      "coordinates": [-117.686219, 42.078896]
-    },
-    "to": {
-      "name": "LRT",
-      "coordinates": [-122.650018, 41.258979]
-    },
+    "from": "Hub",
+    "to": "LRT",
     "Connection_type": "HF"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "Airfield 2",
-      "coordinates": [-118.886914, 36.835072]
-    },
-    "to": {
-      "name": "LRT",
-      "coordinates": [-120.770316, 37.753243]
-    },
+    "from": "HUB-122",
+    "to": "LRT",
     "Connection_type": "HF"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "ST",
-      "coordinates": [-124.153609, 40.762300]
-    },
-    "to": {
-      "name": "E6",
-      "tech": "PRC-160",
-      "coordinates": [-127.336670, 40.647058]
-    },
+    "from": "MLST",
+    "to": "E6",
     "Connection_type": "HF"
   },
   
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "sb",
-      "coordinates": [-131.808665, 40.665136]
-    },
-    "to": {
-      "name": "E6",
-      "tech": "PRC-160",
-      "coordinates": [-127.336670, 40.647058]
-    },
+    "from": "sb",
+    "to": "E6",
     "Connection_type": "HF"
   },
    {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "LRT",
-      "coordinates": [-122.650018, 41.258979]
-    },
-    "to": {
-      "name": "E6",
-      "tech": "PRC-160",
-      "coordinates": [-121.826695, 41.694258]
-    },
+    "from": "LRT",
+    "to": "E6",
     "Connection_type": "HF"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "LRT",
-      "coordinates": [-122.650018, 41.258979]
-    },
-    "to": {
-      "name": "E6",
-      "tech": "PRC-160",
-      "coordinates": [-121.826695, 41.694258]
-    },
+    "from": "LRT",
+    "to": "E6",
     "Connection_type": "VHF"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "ST",
-      "coordinates": [-124.153609, 40.762300]
-    },
-    "to": {
-      "name": "sb",
-      "coordinates": [-131.808665, 40.665136]
-    },
+    "from": "MLST",
+    "to": "sb",
     "Connection_type": "SATCOM"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "ST",
-      "coordinates": [-124.153609, 40.762300]
-    },
-    "to": {
-      "name": "Hub",
-      "coordinates": [-117.686219, 42.078896]
-    },
+    "from": "MLST",
+    "to": "Hub",
     "Connection_type": "SATCOM"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "ST",
-      "coordinates": [-124.153609, 40.762300]
-    },
-    "to": {
-      "name": "Hub",
-      "coordinates": [-117.686219, 42.078896]
-    },
+    "from": "MLST",
+    "to": "Hub",
     "Connection_type": "HF"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "sb",
-      "coordinates": [-131.808665, 40.665136]
-    },
-    "to": {
-      "name": "Hub",
-      "coordinates": [-117.686219, 42.078896]
-    },
+    "from": "sb",
+    "to": "Hub",
     "Connection_type": "SATCOM"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "E6",
-      "coordinates": [-127.336670, 40.647058]
-    },
-    "to": {
-      "name": "E6",
-      "tech": "PRC-160",
-      "coordinates": [-121.826695, 41.694258]
-    },
+    "from": "E6",
+    "to": "E6",
     "Connection_type": "HF"
   }
 ,
   {
-    "inbound": 0, "outbound": 0,
-    "from": { "name": "Oklahoma City", "coordinates": [-97.5164, 35.4676] },
-    "to": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
+    "from": "Oklahoma City",
+    "to": "HUB-112",
     "Connection_type": "RT"
   },
   {
-    "inbound": 0, "outbound": 0,
-    "from": { "name": "Oklahoma City", "coordinates": [-97.5164, 35.4676] },
-    "to": { "name": "Ohio Pin", "coordinates": [-82.9988, 39.9612] },
+    "from": "Oklahoma City",
+    "to": "Ohio Pin",
     "Connection_type": "RT"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "HUB-112",
-      "coordinates": [-118.7242, 39.4204]
-    },
-    "to": {
-      "name": "HUB-122",
-      "coordinates": [-118.886914, 36.835072]
-    },
+    "from": "HUB-112",
+    "to": "HUB-122",
     "Connection_type": "N"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "HUB-112",
-      "coordinates": [-118.7242, 39.4204]
-    },
-    "to": {
-      "name": "HUB-122",
-      "coordinates": [-118.886914, 36.835072]
-    },
+    "from": "HUB-112",
+    "to": "HUB-122",
     "Connection_type": "TR"
   },
   {
-    "inbound": 0,
-    "outbound": 0,
-    "from": {
-      "name": "Ohio Pin",
-      "coordinates": [-82.9988, 39.9612]
-    },
-    "to": {
-      "name": "HUB-122",
-      "coordinates": [-118.886914, 36.835072]
-    },
+    "from": "Ohio Pin",
+    "to": "HUB-122",
     "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "Point 2", "coordinates": [-94.2203, 35.2012] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "Point 2", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "Point 9", "coordinates": [-157.76579, 21.45062] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "Point 9", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "Point 12", "coordinates": [-120.5274, 33.742] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "Point 12", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "Point 14", "coordinates": [-97.4165753955899, 37.66291116755573] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "Point 14", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "bg", "coordinates": [-98.05674958276393, 42.15430638202701] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "bg", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "Hub", "coordinates": [-117.686219, 42.078896] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "Hub", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "Hub", "coordinates": [-115.320093, 39.330707] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "Hub", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "MLST", "coordinates": [-124.153609, 40.7623] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "MLST", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "LRT", "coordinates": [-122.650018, 41.258979] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "LRT", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "LRT", "coordinates": [-120.770316, 37.753243] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "LRT", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "Ohio Pin", "coordinates": [-82.9988, 39.9612] },
-    "to": { "name": "Point 3", "coordinates": [-73.1462, 44.4773] }, "Connection_type": "TR"
+    "from": "Ohio Pin", "to": "Point 3", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "Ohio Pin", "coordinates": [-82.9988, 39.9612] },
-    "to": { "name": "Point 4", "coordinates": [-86.68194, 36.12667] }, "Connection_type": "TR"
+    "from": "Ohio Pin", "to": "Point 4", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "Ohio Pin", "coordinates": [-82.9988, 39.9612] },
-    "to": { "name": "Point 11", "coordinates": [-76.44905, 38.28625] }, "Connection_type": "TR"
+    "from": "Ohio Pin", "to": "Point 11", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "sb", "coordinates": [-131.808665, 40.665136] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "sb", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "nd", "coordinates": [-97.378979, 47.952266] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "Point 13", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "NE", "coordinates": [-95.915086, 41.125063] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "NE", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "e", "coordinates": [-149.811871, 61.252815] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "E", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "HI", "coordinates": [-157.76579, 21.45062] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "Point 9", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "Ohio Pin", "coordinates": [-82.9988, 39.9612] },
-    "to": { "name": "Niscemi", "coordinates": [14.3878135, 37.1485509] }, "Connection_type": "TR"
+    "from": "Ohio Pin", "to": "Niscemi", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "Beale HFCGS", "coordinates": [-121.3599, 39.1115] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "Beale HFCGS", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "Ohio Pin", "coordinates": [-82.9988, 39.9612] },
-    "to": { "name": "Point 2", "coordinates": [-94.2203, 35.2012] }, "Connection_type": "TR"
+    "from": "Ohio Pin", "to": "Point 2", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "Point 9", "coordinates": [-157.76579, 21.45062] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "Point 9", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "Point 12", "coordinates": [-120.5274, 33.742] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "Point 12", "Connection_type": "TR"
   },
   {
-    "inbound": 0, "outbound": 0, "from": { "name": "HUB-112", "coordinates": [-118.7242, 39.4204] },
-    "to": { "name": "Point 14", "coordinates": [-97.4165753955899, 37.66291116755573] }, "Connection_type": "TR"
+    "from": "HUB-112", "to": "Point 14", "Connection_type": "TR"
   }
 ]

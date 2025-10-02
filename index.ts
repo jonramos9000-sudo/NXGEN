@@ -264,7 +264,8 @@ let showPinLabels = false;
  */
 function colorByTypeRGBA(d: any): [number, number, number, number] {
     switch (getConnType(d)) {
-        case "N": return [0, 128, 200, 220];
+        case "N": return [0, 128, 200, 220]; // Blue
+        case "TR": return [255, 165, 0, 220]; // Orange
         case "C": return [0, 200, 0, 220];
         case "HF": return [200, 0, 0, 220];
         default: 	return [128, 128, 128, 200];
@@ -562,7 +563,7 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
  */
 function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
     const connItems: { key: ConnType; label: string; color: string }[] = [
-        { key: "N", 	label: "N", 	color: "rgb(0,128,200)" },
+        { key: "N", 	label: "N", 	color: "rgb(0,128,200)" }, // Blue
         { key: "C", 	label: "C", 	color: "rgb(0,200,0)" },
         { key: "HF", label: "HF", color: "rgb(200,0,0)" }
     ];
@@ -603,7 +604,7 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
                 `).join('')}
                     <label>
                         <input type="checkbox" class="conn-cb" data-key="TR" ${activeTypes.has("TR" as ConnType) ? 'checked' : ''}>
-                        <span class="swatch" style="background:rgb(0,0,0);"></span>
+                        <span class="swatch" style="background:rgb(255, 165, 0);"></span>
                         TR
                     </label>
 

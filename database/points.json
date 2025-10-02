@@ -77,6 +77,11 @@
       "type": "Feature",
       "properties": { "name": "LRT"},
       "geometry": { "type": "Point", "coordinates": [-120.770316, 37.753243] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Ohio Pin" },
+      "geometry": { "type": "Point", "coordinates": [-82.9988, 39.9612] }
     }
   ]
 }

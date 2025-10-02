@@ -19,22 +19,8 @@ import type * as GeoJSON from "geojson";
 const ScatterplotLayer = deck.ScatterplotLayer;
 const ArcLayer = deck.ArcLayer;
 const GoogleMapsOverlay = deck.GoogleMapsOverlay;
-const iconLayer = deck.IconLayer;
 const DataFilterExtension = deck.DataFilterExtension;
 const TextLayer = deck.TextLayer; // TextLayer for persistent labels
-
-// Icon asset URLs
-const airplaneIcon = "database/icons/airplane.png";
-const boatIcon = "database/icons/a-large-navy-ship-silhouette-vector.png";
-const truckIcon = "database/icons/truck.png";
-const trailerIcon = "database/icons/trailer.png";
-
-const ICON_MAP = {
-    airplane: airplaneIcon,
-    boat: boatIcon,
-    truck: truckIcon,
-    trailer: trailerIcon,
-};
 
 // ---------------------- Permanent Map Style (Hides All Native Labels) ----------------------
 
@@ -114,7 +100,6 @@ const POINTS_DATA_URL: string = "database/points.json";
 
 let processedConnections: any[] = [];
 let processedPins: any[] = [];
-let processedIcons: any[] = [];
 
 // ---------------------- Helper Functions ----------------------
 
@@ -210,6 +195,7 @@ const PinLogic = {
 
         // RED_GROUP
         "HUB": "RED_GROUP",
+        "Ohio Pin": "RED_GROUP",
 
         // TURQUOISE_GROUP
         "PENT": "TURQUOISE_GROUP",
@@ -241,7 +227,7 @@ const PinLogic = {
     } as Record<string, PointType>,
 };
 
-let activePointTypes = new Set<PointType>(PinLogic.ALL_POINT_TYPES);
+let activePointTypes = new Set<PointType>();
 
 /**
  * Determine pin type (group) from a feature.
@@ -262,7 +248,7 @@ function colorPinkByType(d: any): [number, number, number, number] {
 
 type ConnType = "N" | "C" | "HF";
 const ALL_TYPES: ConnType[] = ["N", "C", "HF"];
-let activeTypes = new Set<ConnType>(["HF"]); // Initial active type set
+let activeTypes = new Set<ConnType>(); // Initial active type set
 
 /** Flag to control visibility of on-map connection labels. */
 let showConnectionLabels = false;
@@ -369,8 +355,10 @@ let hideHubConnections = false;
 const HUB2_LNG = 9.077841; // EU
 const HUB2_LAT = 48.734481;
 let hideHub2Connections = false;
-let showIcons = true;
 
+
+/** State for the demonstration sequence. */
+let demoStep = 0;
 
 /**
  * Helper for proximity comparison.
@@ -417,8 +405,7 @@ function filterKey() {
         `hub1:${hideHubConnections ? 1 : 0}`,
         `hub2:${hideHub2Connections ? 1 : 0}`,
         Array.from(activePointTypes).sort().join(",")
-    ].join("|") + `|icons:${showIcons ? 1 : 0}` + 
-      `|connLabels:${showConnectionLabels ? 1 : 0}` + 
+    ].join("|") + `|connLabels:${showConnectionLabels ? 1 : 0}` + 
       `|pinLabels:${showPinLabels ? 1 : 0}`;
 }
 
@@ -427,7 +414,7 @@ function filterKey() {
 /**
  * Constructs and returns all Deck.gl layers for the map overlay.
  */
-function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) {
+function buildLayers(connectionsData: any[], pinsData: any[]) {
     // Shared filtering logic for connections, used by both ArcLayer and Connection TextLayer
     const getConnectionFilterValue = (d: any) =>
         (
@@ -528,42 +515,11 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
         updateTriggers: { getFilterValue: filterKey() }
     });
 
-    // Layer for custom icons (e.g., airplane, boat).
-    const icons = new deck.IconLayer({
-        id: 'aircraft-icon',
-        data: iconsData,
-        pickable: true,
-        sizeUnits: 'pixels',
-        getSize: () => 50,
-        sizeMinPixels: 40,
-        sizeMaxPixels: 60,
-        getPosition: (d: any) => d.geometry.coordinates,
-        getIcon: (d: any) => {
-            const iconName = d.properties.icon?.toLowerCase();
-            return {
-                url: ICON_MAP[iconName as keyof typeof ICON_MAP],
-                width: 32,
-                height: 32,
-                anchorX: 16,
-                anchorY: 16,
-            };
-        },
-        loadOptions: { image: { crossOrigin: 'anonymous' } },
-        getFilterValue: (d: any) => showIcons ? 1 : 0,
-        filterRange: [1, 1],
-        extensions: [dataFilterExt],
-        updateTriggers: { getFilterValue: filterKey() },
-        parameters: {
-            depthTest: false,
-            depthMask: false
-        }
-    });
-
     // Layer for persistent on-map pin labels.
     const pinTextLayer = new TextLayer({
         id: 'pin-labels',
         // Only display if showPinLabels is true
-        data: showPinLabels ? [...pinsData, ...iconsData] : [],
+        data: showPinLabels ? pinsData : [],
         pickable: false,
         getPosition: (d: any) => d.geometry.coordinates,
         getText: (d: any) => {
@@ -592,7 +548,7 @@ function buildLayers(connectionsData: any[], pinsData: any[], iconsData: any[]) 
         }
     });
 
-    return [connectionsLayer, connectionTextLayer, pinsLayer, icons, pinTextLayer];
+    return [connectionsLayer, connectionTextLayer, pinsLayer, pinTextLayer];
 }
 
 // ---------------------- UI: Legend and Controls ----------------------
@@ -651,7 +607,6 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
                 <h2 style="font-size:16px; margin:0;">Pins</h2>
                 <div class="button-section">
                     <button id="all-pins-btn">All / None</button>
-                    <label style="flex-grow: 1;"><input type="checkbox" id="icon-toggle-cb" ${showIcons ? 'checked' : ''}> Show Icons</label>
                     <button id="tooltip-btn">${showPinLabels ? 'Hide Labels' : 'Show Labels'}</button>
                 </div>
                 ${pinItems.map(({ key, label, color }) => `
@@ -760,11 +715,6 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         updateMap();
     });
 
-    document.getElementById('icon-toggle-cb')?.addEventListener('change', (e) => {
-        showIcons = (e.target as HTMLInputElement).checked;
-        updateMap();
-    });
-
     // Logic for the "Show Labels" button to toggle the persistent TextLayer for PINS
     document.getElementById('tooltip-btn')?.addEventListener('click', (e) => {
         showPinLabels = !showPinLabels;
@@ -859,15 +809,10 @@ async function preprocessData() {
 
     // Pre-process and split points into pins and icons
     const allPoints = (pointsJson?.type === "FeatureCollection" ? pointsJson.features : pointsJson);
-    processedPins = [];
-    processedIcons = [];
-    allPoints.forEach((p: any) => {
+    processedPins = allPoints.map((p: any) => {
         p._pinType = getPinType(p); // Pre-calculate pin type for all points
-        if (p.properties?.icon) {
-            processedIcons.push(p);
-        } else {
-            processedPins.push(p);
-        }
+        // All points are now treated as pins
+        return p;
     });
 }
 
@@ -921,7 +866,7 @@ async function initMap(): Promise<void> {
 
     // Define the update function shared by all controls
     const layerUpdateCallback = () => {
-        overlay.setProps({ layers: buildLayers(processedConnections, processedPins, processedIcons) });
+        overlay.setProps({ layers: buildLayers(processedConnections, processedPins) });
     };
 
     // Add UI components
@@ -1012,6 +957,82 @@ async function initMap(): Promise<void> {
         mapDiv.appendChild(flyToButton);
     }
 
+    // Create and display the new button underneath the "Fly to" button.
+    const newButton = document.createElement('button');
+    newButton.id = 'new-button';
+    newButton.textContent = 'New Button';
+    newButton.textContent = 'Demonstration';
+    newButton.style.cssText = `
+        position: absolute; z-index: 10; top: 105px; left: 280px;
+        padding: 8px 10px; border: 1px solid #ccc; border-radius: 8px;
+        background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+        font: 13px system-ui, sans-serif; cursor: pointer;
+    `;
+    if (mapDiv) {
+        mapDiv.appendChild(newButton);
+    }
+
+    // Function to update UI checkboxes based on active filter sets
+    const updateCheckboxes = () => {
+        document.querySelectorAll<HTMLInputElement>('.conn-cb').forEach(cb => {
+            cb.checked = activeTypes.has(cb.dataset.key as ConnType);
+        });
+        document.querySelectorAll<HTMLInputElement>('.pin-cb').forEach(cb => {
+            cb.checked = activePointTypes.has(cb.dataset.key as PointType);
+        });
+    };
+
+    /**
+     * Runs an automated demonstration sequence with delays.
+     */
+    async function runDemonstration() {
+        newButton.disabled = true;
+        newButton.textContent = "Running Demo...";
+
+        // Helper to pause execution
+        const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+        // Step 1: Turn off all filters, reveal OKC pin, and center camera.
+        activeTypes.clear();
+        activePointTypes.clear();
+        activePointTypes.add("WHITE_GROUP"); // "Oklahoma City" is in WHITE_GROUP
+        const okcPin = processedPins.find(p => getPointName(p) === "Oklahoma City");
+        if (okcPin) {
+            const okcCoords = asLngLat(okcPin);
+            if (okcCoords) {
+                map.panTo({ lat: okcCoords[1], lng: okcCoords[0] });
+                map.setZoom(6);
+            }
+        }
+        updateCheckboxes();
+        layerUpdateCallback();
+
+        await delay(2000); // Wait for 2 seconds
+
+        // Step 2: Reveal TR connections and S pins.
+        activeTypes.add("TR" as ConnType);
+        activePointTypes.add("BLUE_GROUP"); // 'S' pins are in BLUE_GROUP
+        updateCheckboxes();
+        layerUpdateCallback();
+
+        await delay(2000); // Wait for another 2 seconds
+
+        // Step 3: Reveal P pins.
+        activePointTypes.add("RED_GROUP"); // 'P' pins are in RED_GROUP
+        updateCheckboxes();
+        layerUpdateCallback();
+
+        newButton.disabled = false;
+        newButton.textContent = "Run Demonstration";
+    }
+
+    // Initialize button text
+    newButton.textContent = "Run Demonstration";
+
+    newButton.addEventListener('click', () => {
+        runDemonstration();
+    });
+
     map.addListener("click", (e: google.maps.MapMouseEvent) => {
         const ll = e.latLng;
         if (ll) updateCoordinatesUI(ll.lat(), ll.lng());
@@ -1019,14 +1040,14 @@ async function initMap(): Promise<void> {
     
     // Initialize the overlay with the first set of layers
     overlay = new GoogleMapsOverlay({
-        layers: buildLayers(processedConnections, processedPins, processedIcons),
+        layers: buildLayers(processedConnections, processedPins),
         
         // Tooltip displayed on hover.
         getTooltip: ({ object, layer }) => {
             if (!object) return null;
             
             // Tooltip for pins and icons.
-            if (layer?.id === 'aircraft-icon' || layer?.id === "pins") {
+            if (layer?.id === "pins") {
                 const name = object?.properties?.name ?? (layer?.id === "pins" ? "Pin" : "Icon");
                 const [lng, lat] = asLngLat(object) ?? [];
                 return {

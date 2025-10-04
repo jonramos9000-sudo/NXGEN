@@ -213,6 +213,11 @@ const PinLogic = {
         "LUL": "PINK_GROUP",
 
         // WHITE_GROUP
+        "Site A": "ORANGE_GROUP",
+        "Site B": "ORANGE_GROUP",
+        "Site C": "ORANGE_GROUP",
+
+        // WHITE_GROUP
         "Cutler": "WHITE_GROUP",
         "Grindavik": "WHITE_GROUP",
         "Awase": "WHITE_GROUP",
@@ -264,7 +269,7 @@ let showPinLabels = false;
  */
 function colorByTypeRGBA(d: any): [number, number, number, number] {
     switch (getConnType(d)) {
-        case "N": return [0, 128, 200, 220]; // Blue
+        case "N":  return [0, 128, 200, 220]; // Blue
         case "TR": return [255, 165, 0, 220]; // Orange
         case "C": return [0, 200, 0, 220];
         case "RT": return [200, 0, 0, 220]; // Now Red
@@ -563,7 +568,7 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
  * Adds UI panels for multi-filter controls (connections and pins) to the document.
  */
 function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
-    const connItems: { key: ConnType; label: string; color: string }[] = [
+    const connItems: { key: string; label: string; color: string }[] = [
         { key: "N", 	label: "N", 	color: "rgb(0,128,200)" }, // Blue
         { key: "C", 	label: "C", 	color: "rgb(0,200,0)" },
         { key: "RT",    label: "RT",    color: "rgb(200,0,0)" }, // Now Red
@@ -608,12 +613,6 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
                         ${label}
                     </label>
                 `).join('')}
-                    <label>
-                        <input type="checkbox" class="conn-cb" data-key="TR" ${activeTypes.has("TR") ? 'checked' : ''}>
-                        <span class="swatch" style="background:rgb(255, 165, 0);"></span>
-                        TR
-                    </label>
-
             </div>
             <div class="legend-box">
                 <h2 style="font-size:16px; margin:0;">Pins</h2>
@@ -667,10 +666,6 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
     const connButtonSection = document.getElementById('conn-button-section');
     const connLabelButton = document.createElement('button');
 
-    // Add additional pins to the processed list
-    for (const pinName in PinLogic.ADDITIONAL_PINS) {
-        processedPins.push({ ...PinLogic.ADDITIONAL_PINS[pinName], _pinType: getPinType(PinLogic.ADDITIONAL_PINS[pinName]) });
-    }
     connLabelButton.id = 'toggle-conn-labels-btn';
     connLabelButton.textContent = showConnectionLabels ? 'Hide Details' : 'Show Details';
     connLabelButton.title = 'Toggle on-map connection details (Source/Target Names & Coords)';
@@ -858,11 +853,11 @@ async function preprocessData() {
                 ...c,
                 from: fromPoint,
                 to: toPoint,
-                _sourcePos: fromPoint?.geometry.type === 'Point' ? fromPoint.geometry.coordinates : null,
-                _targetPos: toPoint?.geometry.type === 'Point' ? toPoint.geometry.coordinates : null,
+                _sourcePos: fromPoint?.geometry?.type === 'Point' ? (fromPoint.geometry as GeoJSON.Point).coordinates : undefined,
+                _targetPos: toPoint?.geometry?.type === 'Point' ? (toPoint.geometry as GeoJSON.Point).coordinates : undefined,
                 _connType: getConnType(c),
-                _isHub1: connectsToHub({ _sourcePos: fromPoint?.geometry.coordinates, _targetPos: toPoint?.geometry.coordinates }),
-                _isHub2: connectsToHub2({ _sourcePos: fromPoint?.geometry.coordinates, _targetPos: toPoint?.geometry.coordinates })
+                _isHub1: connectsToHub({ _sourcePos: (fromPoint?.geometry as GeoJSON.Point)?.coordinates, _targetPos: (toPoint?.geometry as GeoJSON.Point)?.coordinates }),
+                _isHub2: connectsToHub2({ _sourcePos: (fromPoint?.geometry as GeoJSON.Point)?.coordinates, _targetPos: (toPoint?.geometry as GeoJSON.Point)?.coordinates })
             };
         })
         .filter(c => c._sourcePos && c._targetPos); // Filter out connections with missing points

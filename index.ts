@@ -101,6 +101,9 @@ const POINTS_DATA_URL: string = "database/points.json";
 let processedConnections: any[] = [];
 let processedPins: any[] = [];
 
+/** A map from a pin's name to a Set of connection types it's part of. */
+const pinToConnTypesMap = new Map<string, Set<string>>();
+
 // ---------------------- Helper Functions ----------------------
 
 /**
@@ -183,7 +186,8 @@ const PinLogic = {
         // YELLOW_GROUP
         "H_AK": "YELLOW_GROUP",
         "Point 13": "YELLOW_GROUP",
-        "E6": "YELLOW_GROUP",
+        "E61": "YELLOW_GROUP",
+        "E62": "YELLOW_GROUP",
         "Point 6": "YELLOW_GROUP",
         "Beale HFCGS": "YELLOW_GROUP",
 
@@ -255,7 +259,7 @@ function colorPinkByType(d: any): [number, number, number, number] {
 
 // ---------------------- Connection Styling & Labeling ----------------------
 
-type ConnType = "N" | "C" | "HF";
+type ConnType = "N" | "C" | "HF" | "RT" | "TR";
 const ALL_TYPES: string[] = ["N", "C", "HF", "RT", "TR"];
 let activeTypes = new Set<string>(); // Initial active type set
 
@@ -426,13 +430,36 @@ function filterKey() {
  * Constructs and returns all Deck.gl layers for the map overlay.
  */
 function buildLayers(connectionsData: any[], pinsData: any[]) {
-    // Shared filtering logic for connections, used by both ArcLayer and Connection TextLayer
-    const getConnectionFilterValue = (d: any) =>
-        (
+    /**
+     * Shared filtering logic for pins. A pin is visible if:
+     * 1. Its pin type is active.
+     * OR
+     * 2. It is an endpoint for any currently active connection type.
+     */
+    const getPinFilterValue = (d: any) => {
+        const pinIsActive = activePointTypes.has(d._pinType);
+        if (pinIsActive) return 1;
+
+        const associatedConnTypes = pinToConnTypesMap.get(getPointName(d)) || new Set();
+        return Array.from(associatedConnTypes).some(connType => activeTypes.has(connType)) ? 1 : 0;
+    };
+
+    /**
+     * Shared filtering logic for connections. A connection is visible if:
+     * 1. Its connection type is active.
+     * 2. It's not a hidden HUB connection.
+     * 3. The pins at BOTH its start and end points are visible (based on getPinFilterValue).
+     */
+    const getConnectionFilterValue = (d: any) => {
+        const sourcePinVisible = getPinFilterValue(d.from) === 1;
+        const targetPinVisible = getPinFilterValue(d.to) === 1;
+        return (
             activeTypes.has(d._connType) &&
             (!hideHubConnections 	|| !d._isHub1) 	&&
-            (!hideHub2Connections || !d._isHub2)
+            (!hideHub2Connections || !d._isHub2) &&
+            sourcePinVisible && targetPinVisible
         ) ? 1 : 0;
+    };
 
     // Layer for the main connection lines (arcs).
     const connectionsLayer = new ArcLayer({
@@ -518,9 +545,9 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         radiusMaxPixels: 18,
         getFillColor: (d: any) => colorPinkByType(d),
         stroked: true,
-        getLineColor: [0, 0, 0, 200],
+        getLineColor: [0, 0, 0, 200], // Black outline
         lineWidthMinPixels: 1,
-        getFilterValue: (d: any) => activePointTypes.has(d._pinType) ? 1 : 0,
+        getFilterValue: getPinFilterValue,
         filterRange: [1, 1],
         extensions: [dataFilterExt],
         updateTriggers: { getFilterValue: filterKey() }
@@ -542,7 +569,7 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         getColor: [255, 255, 255, 255],
         getSize: 12,
         getPixelOffset: [0, 20], // Offset to appear below the pin/icon
-        getFilterValue: (d: any) => activePointTypes.has(d._pinType) ? 1 : 0,
+        getFilterValue: getPinFilterValue,
         filterRange: [1, 1],
         extensions: [dataFilterExt],
         updateTriggers: { getFilterValue: filterKey() },
@@ -572,7 +599,8 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         { key: "N", 	label: "N", 	color: "rgb(0,128,200)" }, // Blue
         { key: "C", 	label: "C", 	color: "rgb(0,200,0)" },
         { key: "RT",    label: "RT",    color: "rgb(200,0,0)" }, // Now Red
-        { key: "HF", label: "HF", color: "rgb(255,105,180)" } // Now Pink
+        { key: "HF", label: "HF", color: "rgb(255,105,180)" },
+        { key: "TR", label: "TR", color: "rgb(255,165,0)" } 
     ];
     const pinItems: { key: PointType; label: string; color: string }[] = [
         { key: "PINK_GROUP", 	 	label: "F", 	color: "rgb(255, 105, 180)" },
@@ -819,6 +847,8 @@ async function preprocessData() {
         if (name) pointMap.set(name, p);
     });
 
+    pinToConnTypesMap.clear();
+
     // Add HUB2 since it's referenced in connections but not in points.json
     pointMap.set("HUB2", {
         type: "Feature",
@@ -831,12 +861,20 @@ async function preprocessData() {
         .filter((c: any) => {
             const connType = getConnType(c);
             if (connType === 'TR') {
-                const fromName = getProp(c, "from");
-                const toPoint = pointMap.get(getProp(c, "to"));
-                const toLng = toPoint?.geometry.type === 'Point' ? toPoint.geometry.coordinates[0] : undefined;
+                const fromName = getProp(c, 'from');
+                const toName = getProp(c, 'to');
+                const toPoint = pointMap.get(toName);
+
+                // The point might not be in our map if it's external
+                if (!toPoint) return true;
+
+                const toCoords = toPoint.geometry?.type === 'Point' ? toPoint.geometry.coordinates : null;
+                const toLng = toCoords ? toCoords[0] : undefined;
+
                 if (toLng == null) return true; // Keep if destination is unknown
 
                 // Mississippi River is approximately at -90 longitude
+                // This logic seems to be for specific 'TR' connections
                 if (fromName === 'Ohio Pin') {
                     return toLng > -90; // East of Mississippi
                 }
@@ -849,12 +887,37 @@ async function preprocessData() {
         .map((c: any) => {
             const fromPoint = pointMap.get(getProp(c, "from"));
             const toPoint = pointMap.get(getProp(c, "to"));
+
+            // If a point is missing, we can't render the connection anyway,
+            // but to prevent crashes in the filter, we'll use placeholder objects.
+            const safeFromPoint = fromPoint || { _pinType: 'BLUE_GROUP', properties: { name: 'unknown' } };
+            const safeToPoint = toPoint || { _pinType: 'BLUE_GROUP', properties: { name: 'unknown' } };
+            // Pre-calculate pin types for the connection's endpoints.
+            const sourcePinType = fromPoint ? getPinType(fromPoint) : "BLUE_GROUP";
+            const targetPinType = toPoint ? getPinType(toPoint) : "BLUE_GROUP";
+            const connType = getConnType(c);
+
+            // Update the pinToConnTypesMap for both source and target pins
+            if (fromPoint) {
+                const fromName = getPointName(fromPoint);
+                if (!pinToConnTypesMap.has(fromName)) pinToConnTypesMap.set(fromName, new Set());
+                pinToConnTypesMap.get(fromName)!.add(connType);
+            }
+            if (toPoint) {
+                const toName = getPointName(toPoint);
+                if (!pinToConnTypesMap.has(toName)) pinToConnTypesMap.set(toName, new Set());
+                pinToConnTypesMap.get(toName)!.add(connType);
+            }
+
+
             return {
                 ...c,
-                from: fromPoint,
-                to: toPoint,
+                from: safeFromPoint,
+                to: safeToPoint,
                 _sourcePos: fromPoint?.geometry?.type === 'Point' ? (fromPoint.geometry as GeoJSON.Point).coordinates : undefined,
                 _targetPos: toPoint?.geometry?.type === 'Point' ? (toPoint.geometry as GeoJSON.Point).coordinates : undefined,
+                _sourcePinType: sourcePinType,
+                _targetPinType: targetPinType,
                 _connType: getConnType(c),
                 _isHub1: connectsToHub({ _sourcePos: (fromPoint?.geometry as GeoJSON.Point)?.coordinates, _targetPos: (toPoint?.geometry as GeoJSON.Point)?.coordinates }),
                 _isHub2: connectsToHub2({ _sourcePos: (fromPoint?.geometry as GeoJSON.Point)?.coordinates, _targetPos: (toPoint?.geometry as GeoJSON.Point)?.coordinates })

@@ -5,7 +5,7 @@
     { "type": "Feature", "properties": { "name": "Point 2" }, "geometry": { "type": "Point", "coordinates": [-94.2203, 35.2012] } },
     { "type": "Feature", "properties": { "name": "Point 3" }, "geometry": { "type": "Point", "coordinates": [-73.1462, 44.4773] } },
     { "type": "Feature", "properties": { "name": "Point 4" }, "geometry": { "type": "Point", "coordinates": [-86.68194, 36.12667] } },
-    { "type": "Feature", "properties": { "name": "E6", "icon": "airplane" }, "geometry": { "type": "Point", "coordinates": [-121.826695, 41.694258] } },
+    { "type": "Feature", "properties": { "name": "E61", "icon": "airplane" }, "geometry": { "type": "Point", "coordinates": [-121.826695, 41.694258] } },
     { "type": "Feature", "properties": { "name": "Point 6" }, "geometry": { "type": "Point", "coordinates": [-80.57285, 28.48864] } },
     { "type": "Feature", "properties": { "name": "H_AK" }, "geometry": { "type": "Point", "coordinates": [-76.867142, 38.811563] } },
     { "type": "Feature", "properties": { "name": "E" }, "geometry": { "type": "Point", "coordinates": [-149.811871, 61.252815] } },
@@ -45,7 +45,7 @@
     { "type": "Feature", "properties": { "name": "Oklahoma City", "type": "TMR" }, "geometry": { "type": "Point", "coordinates": [-97.5164, 35.4676] } },
     {
       "type": "Feature",
-      "properties": { "name": "Hub" },
+      "properties": { "name": "Hub1" },
       "geometry": { "type": "Point", "coordinates": [-117.686219, 42.078896] }
     },
     {
@@ -65,17 +65,17 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "E6", "icon":"airplane" },
+      "properties": { "name": "E62", "icon":"airplane" },
       "geometry": { "type": "Point", "coordinates": [-127.336670, 40.647058] }
     },
     {
       "type": "Feature",
-      "properties": { "name": "LRT"},
+      "properties": { "name": "LRT1"},
       "geometry": { "type": "Point", "coordinates": [-122.650018, 41.258979] }
     },
     {
       "type": "Feature",
-      "properties": { "name": "LRT"},
+      "properties": { "name": "LRT2"},
       "geometry": { "type": "Point", "coordinates": [-120.770316, 37.753243] }
     },
     {

@@ -581,25 +581,25 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
  */
 function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
     const connItems: { key: string; label: string; color: string }[] = [
-        { key: "N", 	label: "N", 	color: "rgb(0,128,200)" }, // Blue
-        { key: "C", 	label: "C", 	color: "rgb(0,200,0)" },
-        { key: "RT",    label: "RT",    color: "rgb(200,0,0)" }, // Now Red
-        { key: "HF", label: "HF", color: "rgb(255,105,180)" },
-        { key: "TR", label: "TR", color: "rgb(255,165,0)" } 
+        { key: "N", 	label: "Blue", 	color: "rgb(0,128,200)" }, // Blue
+        { key: "C", 	label: "Green", 	color: "rgb(0,200,0)" },
+        { key: "RT",    label: "Red",    color: "rgb(200,0,0)" }, // Now Red
+        { key: "HF", label: "Pink", color: "rgb(255,105,180)" },
+        { key: "TR", label: "Orange", color: "rgb(255,165,0)" } 
     ];
     const pinItems: { key: PointType; label: string; color: string }[] = [
-        { key: "PINK_GROUP", 	 	label: "F", 	color: "rgb(255, 105, 180)" },
-        { key: "VIOLET_GROUP", 		label: "SB", color: "rgb(130, 42, 245)" },
-        { key: "RED_GROUP", 	 	label: "P", 	color: "rgb(200, 0, 0)" },
-        { key: "TURQUOISE_GROUP", label: "D", 	color: "rgb(64, 224, 208)" },
-        { key: "YELLOW_GROUP", 		label: "G", 	color: "rgb(255, 255, 0)" },
-        { key: "GREEN_GROUP", 		label: "M", 	color: "rgb(0, 128, 0)" },
-        { key: "PURPLE_GROUP", 		label: "T", 	color: "rgb(128, 0, 128)" },
-        { key: "ORANGE_GROUP", 		label: "B", 	color: "rgb(255, 165, 0)" },
-        { key: "BLUE_GROUP", 		label: "S", 	color: "rgb(0, 120, 255)" },
-        { key: "WHITE_GROUP", 		label: "W", 	color: "rgb(197, 110, 255)" },
-        { key: "OKC_GROUP",         label: "OKC",   color: "rgb(0, 255, 255)" },
-        { key: "MAGENTA_GROUP", 	label: "GCS", color: "rgb(255, 0, 255)" }
+        { key: "PINK_GROUP", 	 	label: "Pink", 	color: "rgb(255, 105, 180)" },
+        { key: "VIOLET_GROUP", 		label: "Violet", color: "rgb(130, 42, 245)" },
+        { key: "RED_GROUP", 	 	label: "Red", 	color: "rgb(200, 0, 0)" },
+        { key: "TURQUOISE_GROUP", label: "Turquoise", 	color: "rgb(64, 224, 208)" },
+        { key: "YELLOW_GROUP", 		label: "Yellow", 	color: "rgb(255, 255, 0)" },
+        { key: "GREEN_GROUP", 		label: "Green", 	color: "rgb(0, 128, 0)" },
+        { key: "PURPLE_GROUP", 		label: "Purple", 	color: "rgb(128, 0, 128)" },
+        { key: "ORANGE_GROUP", 		label: "Orange", 	color: "rgb(255, 165, 0)" },
+        { key: "BLUE_GROUP", 		label: "Blue", 	color: "rgb(0, 120, 255)" },
+        { key: "WHITE_GROUP", 		label: "White", 	color: "rgb(197, 110, 255)" },
+        { key: "OKC_GROUP",         label: "Cyan",   color: "rgb(0, 255, 255)" },
+        { key: "MAGENTA_GROUP", 	label: "Magenta", color: "rgb(255, 0, 255)" }
     ];
 
     const controlsContainer = document.createElement('div');

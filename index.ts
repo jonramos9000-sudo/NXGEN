@@ -958,6 +958,9 @@ async function initMap(): Promise<void> {
     // Initialize filters to show only HF connections by default
     activeTypes = new Set(["HF"]);
     activePointTypes = new Set(PinLogic.ALL_POINT_TYPES);
+    // Initialize with all filters off by default.
+    activeTypes = new Set();
+    activePointTypes = new Set();
 
     // Create and display the "Fly from OKC to HUB" button on load
     const flyToButton = document.createElement('button');

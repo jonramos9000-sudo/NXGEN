@@ -393,7 +393,7 @@
     "Connection_type": "TR"
   },
   {
-    "from": "FOB1", "to": "Point 9", "Connection_type": "TR"
+    "from": "FOB1", "to": "Point 9", "Connection_type": "TR1"
   },
   {
     "from": "FOB1", "to": "Point 12", "Connection_type": "TR"
@@ -407,9 +407,6 @@
   },
   {
     "from": "FOB1", "to": "MLST", "Connection_type": "TR"
-  },
-  {
-    "from": "FOB1", "to": "LRT1", "Connection_type": "TR"
   },
   {
     "from": "FOB1", "to": "LRT", "Connection_type": "TR"
@@ -429,19 +426,13 @@
   {
     "from": "FOB1", "to": "NE", "Connection_type": "TR"
   },
-
-  {
-    "from": "FOB1", "to": "Point 9", "Connection_type": "TR"
-  },
   {
     "from": "FOB1", "to": "Beale HFCGS", "Connection_type": "TR"
   },
   {
     "from": "Ohio Pin", "to": "Point 2", "Connection_type": "TR"
   },
-  {
-    "from": "FOB1", "to": "Point 9", "Connection_type": "TR"
-  },
+ 
   {
     "from": "FOB1", "to": "Point 12", "Connection_type": "TR"
   },
@@ -472,5 +463,92 @@
     "from": "Oklahoma City",
     "to": "bg",
     "Connection_type": "TR"
-  }
+  },
+   {
+    "from": "Hub2",
+    "to": "HUB-122",
+    "Connection_type": "HF"
+  },
+  {
+    "from": "Hub1",
+    "to": "HUB-122",
+    "Connection_type": "HF"
+  },
+  {"from":"Hub2",
+    "to" : "FOB1", "Connection_type": "SL"
+  },
+  {"from":"HUB-122",
+    "to" : "FOB1", "Connection_type": "SL"
+  },
+  {"from":"Hub1",
+    "to" : "FOB1", "Connection_type": "SL"
+  },
+  {"from":"Hub2",
+    "to" : "NE", "Connection_type": "SL"
+  },
+  {"from":"HUB-122",
+    "to" : "NE", "Connection_type": "SL"
+  },
+  {"from":"Hub1",
+    "to" : "NE", "Connection_type": "SL"
+  },
+  {"from":"Point 3",
+    "to" : "Point 11", "Connection_type": "HF"
+  },
+  {"from":"Point 3",
+    "to" : "Point 4", "Connection_type": "HF"
+  },
+  {"from":"Point 4",
+    "to" : "Point 11", "Connection_type": "HF"
+  },
+  {"from":"Point 3",
+    "to" : "Ohio Pin", "Connection_type": "SL"
+  },
+  {"from":"Point 4",
+    "to" : "Ohio Pin", "Connection_type": "SL"
+  },
+  {"from":"Point 11",
+    "to" : "Ohio Pin", "Connection_type": "SL"
+  },
+    {"from":"Point 3",
+    "to" : "NE", "Connection_type": "SL"
+  },
+  {"from":"Point 4",
+    "to" : "NE", "Connection_type": "SL"
+  },
+  {"from":"Point 11",
+    "to" : "NE", "Connection_type": "SL"
+  },
+  {"from":"Point 11",
+    "to" : "Ohio Pin", "Connection_type": "SL"
+  },
+    {"from":"bg",
+    "to" : "NE", "Connection_type": "SL"
+  },
+  {"from":"Point 14",
+    "to" : "NE", "Connection_type": "SL"
+  },
+  {"from":"Point 2",
+    "to" : "NE", "Connection_type": "SL"
+  },
+  {"from":"bg",
+    "to" : "Point 14", "Connection_type": "HF"
+  },
+  {"from":"bg",
+    "to" : "Point 2", "Connection_type": "HF"
+  },
+  {"from":"Point 2",
+    "to" : "Point 14", "Connection_type": "HF"
+  },
+  {"from":"bg",
+    "to" : "Oklahoma City", "Connection_type": "SL"
+  },
+  {"from":"Point 14",
+    "to" : "Oklahoma City", "Connection_type": "SL"
+  },
+  {"from":"Point 2",
+    "to" : "Oklahoma City", "Connection_type": "SL"
+  },
+  {"from":"NE", "to": "Ohio Pin", "Connection_type": "TR"}
+  
 ]

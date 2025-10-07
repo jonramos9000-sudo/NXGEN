@@ -150,7 +150,9 @@ type PointType =
     | "PINK_GROUP"
     | "WHITE_GROUP"
     | "OKC_GROUP"
-    | "MAGENTA_GROUP";
+    | "MAGENTA_GROUP"
+    | "GREY_GROUP"
+    ;
 
 /**
  * Encapsulates pin group logic for mapping pin names to colors and types.
@@ -159,7 +161,7 @@ const PinLogic = {
     ALL_POINT_TYPES: [
         "RED_GROUP", "TURQUOISE_GROUP", "YELLOW_GROUP", "GREEN_GROUP",
         "PURPLE_GROUP", "ORANGE_GROUP", "BLUE_GROUP", "VIOLET_GROUP", "PINK_GROUP", "WHITE_GROUP",
-        "MAGENTA_GROUP", "OKC_GROUP"] as PointType[],
+        "MAGENTA_GROUP", "OKC_GROUP", "GREY_GROUP"] as PointType[],
 
     // RGBA color map for each pin group
     PIN_COLOR_MAP: {
@@ -174,7 +176,7 @@ const PinLogic = {
         PINK_GROUP:      [255, 105, 180, 220],
         WHITE_GROUP:     [197, 110, 255, 255],
         MAGENTA_GROUP:   [255, 0, 255, 255],
-        GREY_GROUP: [25, 31, 52, 220],
+        GREY_GROUP: [169, 169, 169, 220],
         OKC_GROUP:       [0, 255, 255, 220]} as Record<PointType, [number, number, number, number]>,
 
     // Pin name to group mapping
@@ -233,9 +235,12 @@ const PinLogic = {
         "La Moure": "WHITE_GROUP",
         "Norfolk": "WHITE_GROUP",
         "Yokosuka": "WHITE_GROUP",
-        
+
         // MAGENTA_GROUP HFGCS
         "Beale HFCGS": "MAGENTA_GROUP",
+
+        "LRT1": "GREY_GROUP",
+        "LRT2": "GREY_GROUP",
  
         "Oklahoma City": "OKC_GROUP"
         
@@ -264,8 +269,8 @@ function colorPinkByType(d: any): [number, number, number, number] {
 
 // ---------------------- Connection Styling & Labeling ----------------------
 
-type ConnType = "N" | "C" | "HF" | "RT" | "TR" | "SAT" | "HF L" | "U L";
-const ALL_TYPES: string[] = ["N", "C", "HF", "RT", "TR", "SAT", "HF L", "U L"];
+type ConnType = "N" | "C" | "HF" | "RT" | "TR" | "SAT" | "HF L" | "U L" | "SL";
+const ALL_TYPES: string[] = ["N", "C", "HF", "RT", "TR", "SAT", "HF L", "U L", "SL"];
 
 /** Flag to control visibility of on-map connection labels. */
 let showConnectionLabels = false;
@@ -285,6 +290,7 @@ function colorByTypeRGBA(d: any): [number, number, number, number] {
         case "SAT": return [128, 0, 128, 220];
         case "HF L": return [255, 255, 0, 220];
         case "U L": return [8, 232, 222, 220];
+        case "SL": return[255, 0, 127, 220];
 
         default: 	return [128, 128, 128, 200];
     }
@@ -297,6 +303,7 @@ function getHeightByType(d: any): number {
     switch (getConnType(d)) {
         //case "N": return 5;
         //case "C": return 10;
+        case "SL" : return 0.96;
         case "SAT": return 0.9;
         case "HF L": return 0.8;
         case "U L": return 0.7;
@@ -591,7 +598,8 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         { key: "TR", label: "Orange", color: "rgb(255,165,0)" },
         { key: "SAT", label: "Purple", color: "rgb(128,0,128)" }, // Purple
         { key: "HF L", label: "Yellow", color: "rgb(255, 255, 0)"},
-        { key: "U L", label: "Turquoise", color: "rgb(64,224,208)"}
+        { key: "U L", label: "Turquoise", color: "rgb(64,224,208)"},
+        { key: "SL", label: "Hot Pink", color: "rgb(255,0,127)"}
     ];
     const pinItems: { key: PointType; label: string; color: string }[] = [
         { key: "PINK_GROUP", 	 	label: "Pink", 	color: "rgb(255, 105, 180)" },
@@ -605,7 +613,8 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         { key: "BLUE_GROUP", 		label: "Blue", 	color: "rgb(0, 120, 255)" },
         { key: "WHITE_GROUP", 		label: "White", 	color: "rgb(197, 110, 255)" },
         { key: "OKC_GROUP",         label: "Cyan",   color: "rgb(0, 255, 255)" },
-        { key: "MAGENTA_GROUP", 	label: "Magenta", color: "rgb(255, 0, 255)" }
+        { key: "MAGENTA_GROUP", 	label: "Magenta", color: "rgb(255, 0, 255)" },
+        { key: "GREY_GROUP", 		label: "Grey", 	color: "rgb(169, 169, 169)" },
     ];
 
     const controlsContainer = document.createElement('div');

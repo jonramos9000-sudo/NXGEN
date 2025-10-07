@@ -282,8 +282,8 @@ function colorByTypeRGBA(d: any): [number, number, number, number] {
         case "C": return [0, 200, 0, 220];
         case "RT": return [200, 0, 0, 220]; // Now Red
         case "HF": return [255, 105, 180, 220]; // Now Pink
-        case "SAT": return [191, 0, 255, 220];
-        case "HF L": return [251, 231, 179, 220];
+        case "SAT": return [128, 0, 128, 220];
+        case "HF L": return [255, 255, 0, 220];
         case "U L": return [8, 232, 222, 220];
 
         default: 	return [128, 128, 128, 200];
@@ -589,8 +589,8 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         { key: "RT",    label: "Red",    color: "rgb(200,0,0)" }, // Now Red
         { key: "HF", label: "Pink", color: "rgb(255,105,180)" },
         { key: "TR", label: "Orange", color: "rgb(255,165,0)" },
-        { key: "SAT", label: "Purple", color: "rgb(128,0,128)" },
-        { key: "HF L", label: "Yellow", color: "rgb(251, 231, 179)"},
+        { key: "SAT", label: "Purple", color: "rgb(128,0,128)" }, // Purple
+        { key: "HF L", label: "Yellow", color: "rgb(255, 255, 0)"},
         { key: "U L", label: "Turquoise", color: "rgb(64,224,208)"}
     ];
     const pinItems: { key: PointType; label: string; color: string }[] = [

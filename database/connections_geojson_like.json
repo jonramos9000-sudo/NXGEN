@@ -334,7 +334,7 @@
   {
     "from": "LRT1",
     "to": "E61",
-    "Connection_type": "VLF"
+    "Connection_type": "HF L"
   },
   {
     "from": "MLST",
@@ -473,5 +473,7 @@
   {"from": "MLST", "to": "Hub1", "Connection_type": "SAT"
   },
   {"from": "MLST", "to": "sb", "Connection_type": "SAT"
+  },
+  {"from": "LRT1", "to": "Hub1", "Connection_type": "U L"
   }
 ]

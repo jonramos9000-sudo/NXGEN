@@ -586,7 +586,7 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         { key: "HF", label: "Pink", color: "rgb(255,105,180)" },
         { key: "TR", label: "Orange", color: "rgb(255,165,0)" },
         { key: "SAT", label: "Purple", color: "rgb(128,0,128)" },
-        { key: "HF L", label: "Yellow", color: "rgb(251, 231, 179)"},
+        { key: "HF L", label: "Yellow", color: "rgb(255, 255, 0)"},
         { key: "U L", label: "Turquoise", color: "rgb(64,224,208)"}
     ];
     const pinItems: { key: PointType; label: string; color: string }[] = [

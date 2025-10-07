@@ -323,7 +323,7 @@
   
   {
     "from": "sb",
-    "to": "E6",
+    "to": "E62",
     "Connection_type": "HF"
   },
    {
@@ -343,12 +343,17 @@
   },
   {
     "from": "MLST",
+    "to": "sb",
+    "Connection_type": "HF"
+  },
+  {
+    "from": "MLST",
     "to": "Hub",
     "Connection_type": "SATCOM"
   },
   {
     "from": "MLST",
-    "to": "Hub",
+    "to": "Hub1",
     "Connection_type": "HF"
   },
   {
@@ -357,8 +362,8 @@
     "Connection_type": "SATCOM"
   },
   {
-    "from": "E6",
-    "to": "E6",
+    "from": "E61",
+    "to": "E62",
     "Connection_type": "HF"
   }
 ,
@@ -403,7 +408,7 @@
     "from": "HUB-112", "to": "bg", "Connection_type": "TR"
   },
   {
-    "from": "HUB-112", "to": "Hub", "Connection_type": "TR"
+    "from": "HUB-112", "to": "Hub1", "Connection_type": "TR"
   },
   {
     "from": "HUB-112", "to": "Hub", "Connection_type": "TR"
@@ -412,7 +417,7 @@
     "from": "HUB-112", "to": "MLST", "Connection_type": "TR"
   },
   {
-    "from": "HUB-112", "to": "LRT", "Connection_type": "TR"
+    "from": "HUB-112", "to": "LRT1", "Connection_type": "TR"
   },
   {
     "from": "HUB-112", "to": "LRT", "Connection_type": "TR"

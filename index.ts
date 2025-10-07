@@ -149,7 +149,8 @@ type PointType =
     | "BLUE_GROUP"
     | "PINK_GROUP"
     | "WHITE_GROUP"
-    | "OKC_GROUP";
+    | "OKC_GROUP"
+    | "MAGENTA_GROUP";
 
 /**
  * Encapsulates pin group logic for mapping pin names to colors and types.
@@ -157,8 +158,8 @@ type PointType =
 const PinLogic = {
     ALL_POINT_TYPES: [
         "RED_GROUP", "TURQUOISE_GROUP", "YELLOW_GROUP", "GREEN_GROUP",
-        "PURPLE_GROUP", "ORANGE_GROUP", "BLUE_GROUP", "VIOLET_GROUP", "PINK_GROUP", "WHITE_GROUP"
-    , "OKC_GROUP"] as PointType[],
+        "PURPLE_GROUP", "ORANGE_GROUP", "BLUE_GROUP", "VIOLET_GROUP", "PINK_GROUP", "WHITE_GROUP",
+        "MAGENTA_GROUP", "OKC_GROUP"] as PointType[],
 
     // RGBA color map for each pin group
     PIN_COLOR_MAP: {
@@ -171,8 +172,8 @@ const PinLogic = {
         BLUE_GROUP:      [0, 120, 255, 220],
         VIOLET_GROUP:    [130, 42, 245, 220],
         PINK_GROUP:      [255, 105, 180, 220],
-        WHITE_GROUP:     [197, 110, 255, 255]
-    ,
+        WHITE_GROUP:     [197, 110, 255, 255],
+        MAGENTA_GROUP:   [255, 0, 255, 255],
         OKC_GROUP:       [0, 255, 255, 220]} as Record<PointType, [number, number, number, number]>,
 
     // Pin name to group mapping
@@ -186,7 +187,6 @@ const PinLogic = {
         "E61": "YELLOW_GROUP",
         "E62": "YELLOW_GROUP",
         "Point 6": "YELLOW_GROUP",
-        "Beale HFCGS": "YELLOW_GROUP",
 
         // PURPLE_GROUP
         "Support Team": "PURPLE_GROUP",
@@ -230,10 +230,11 @@ const PinLogic = {
         "Jim Creek": "WHITE_GROUP",
         "La Moure": "WHITE_GROUP",
         "Norfolk": "WHITE_GROUP",
-        "Yokosuka": "WHITE_GROUP"
-    ,
-
+        "Yokosuka": "WHITE_GROUP",
+        "Beale HFCGS": "MAGENTA_GROUP",
+ 
         "Oklahoma City": "OKC_GROUP"
+        
     } as Record<string, PointType>,
 };
 
@@ -473,19 +474,17 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         // Position label at the midpoint of the connection's chord
         getPosition: getLabelMidpoint,
         getText: (d: any) => {
-            const fromObj = d?.from ?? d?.properties?.from;
-            const toObj 	= d?.to 	?? d?.properties?.to;
+            const fromObj = d?.from;
+            const toObj 	= d?.to;
             
-            const fromName = fromObj?.name ?? "Unknown Start";
-            const toName 	= toObj?.name 	?? "Unknown End";
+            const fromName = fromObj?.properties?.name ?? "Unknown Start";
+            const toName 	= toObj?.properties?.name 	?? "Unknown End";
+            const fromTech = fromObj?.properties?.tech;
+            const toTech 	= toObj?.properties?.tech;
             const connType = getConnType(d);
 
-            // Get coordinates (or use 0,0 if missing for safe formatting)
-            const [flng, flat] = asLngLat(fromObj) ?? [0, 0];
-            const [tlng, tlat] = asLngLat(toObj) 	?? [0, 0];
-            
-            // Multi-line string with start/end points, coordinates, and type.
-            return `\u25b6 START: ${fromName}\nLat: ${fmt(flat, 4)}, Lng: ${fmt(flng, 4)}\n\u25b6 END: ${toName}\nLat: ${fmt(tlat, 4)}, Lng: ${fmt(tlng, 4)}\n(${connType})`;
+            // Multi-line string with start/end points and type.
+            return `\u25b6 START: ${fromName}${fromTech ? ` (${fromTech})` : ''}\n\u25b6 END: ${toName}${toTech ? ` (${toTech})` : ''}\n(${connType})`;
         },
         // Use background for the black box effect
         background: true,
@@ -493,7 +492,7 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         getColor: [255, 255, 255, 255], 		// White text
         
         // Text rendering settings for clarity and performance.
-        getSize: 12, // Increased from 10
+        getSize: 15,
         fontSettings: {
             sdf: true // Use Signed Distance Field textures for robustness
         },
@@ -547,12 +546,13 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         getPosition: (d: any) => d.geometry.coordinates,
         getText: (d: any) => {
             const name = d.properties?.name || '';
-            const [lng, lat] = asLngLat(d) ?? []; 
-            // Create a multi-line string for name, lat, and lng
-            return `${name}\nLat: ${fmt(lat, 4)}\nLng: ${fmt(lng, 4)}`;
+            const tech = d.properties?.tech;
+            // Display name, and tech on a new line if it exists.
+            if (tech) return `${name}\n${tech}`;
+            return name;
         },
         getColor: [255, 255, 255, 255],
-        getSize: 12,
+        getSize: 14,
         getPixelOffset: [0, 20], // Offset to appear below the pin/icon
         getFilterValue: (d: any) => activePointTypes.has(d._pinType) ? 1 : 0,
         filterRange: [1, 1],
@@ -598,7 +598,8 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         { key: "ORANGE_GROUP", 		label: "B", 	color: "rgb(255, 165, 0)" },
         { key: "BLUE_GROUP", 		label: "S", 	color: "rgb(0, 120, 255)" },
         { key: "WHITE_GROUP", 		label: "W", 	color: "rgb(197, 110, 255)" },
-        { key: "OKC_GROUP",         label: "OKC",   color: "rgb(0, 255, 255)" }
+        { key: "OKC_GROUP",         label: "OKC",   color: "rgb(0, 255, 255)" },
+        { key: "MAGENTA_GROUP", 	label: "GCS", color: "rgb(255, 0, 255)" }
     ];
 
     const controlsContainer = document.createElement('div');
@@ -947,8 +948,8 @@ async function initMap(): Promise<void> {
     // Add multi-filter controls, which includes all filtering and label toggles.
     addMultiFilterControls(map, layerUpdateCallback);
 
-    // Initialize filters to show everything by default
-    activeTypes = new Set(ALL_TYPES);
+    // Initialize filters to show only HF connections by default
+    activeTypes = new Set(["HF"]);
     activePointTypes = new Set(PinLogic.ALL_POINT_TYPES);
 
     // Create and display the "Fly from OKC to HUB" button on load
@@ -1140,28 +1141,19 @@ async function initMap(): Promise<void> {
             }
             
             // Tooltip for connections.
-            const fromObj = object?.from ?? object?.properties?.from;
-            const toObj 	= object?.to 	?? object?.properties?.to;
-            const fromName = fromObj?.name ?? "From";
-            const toName 	= toObj?.name 	?? "To";
+            const fromObj = object?.from;
+            const toObj 	= object?.to;
+            const fromName = fromObj?.properties?.name ?? "From";
+            const toName 	= toObj?.properties?.name 	?? "To";
             const connType = getConnType(object);
-            const fromTech = fromObj?.tech ?? fromObj?.properties?.tech;
-            const toTech 	= toObj?.tech 	?? toObj?.properties?.properties?.tech;
-            const from = getSourcePos(object);
-            const to 	= getTargetPos(object);
-            const [flng, flat] = Array.isArray(from) ? from : [];
-            const [tlng, tlat] = Array.isArray(to) 	? to 	 : [];
+            const fromTech = fromObj?.properties?.tech;
+            const toTech 	= toObj?.properties?.tech;
             return {
                 html: `
                     <div style="font-family:system-ui; font-size:12px; line-height:1.35; color: white">
-                        <div style="margin-bottom:4px;">
-                            <b>${fromName}</b> &rarr; <b>${toName}</b>
-                            <span style="opacity:.7;">(${connType})</span>
-                        </div>
-                        <div><b>${fromName}</b> <span style="opacity:1;">(${fromTech})</span></div>
-                        <div><b>Lat:</b> ${fmt(flat)}, <b>Lng:</b> ${fmt(flng)}</div>
-                        <div style="margin-top:4px;"><b>${toName}</b> &nbsp;&nbsp;<span style="opacity:1;">(${toTech})</span></div>
-                        <div><b>Lat:</b> ${fmt(tlat)}, <b>Lng:</b> ${fmt(tlng)}</div>
+                        <div>From: "${fromName}" (${fromTech ?? 'N/A'})</div>
+                        <div>To: "${toName}" (${toTech ?? 'N/A'})</div>
+                        <div style="margin-top:4px;">Type: ${connType}</div>
                     </div>
                 `
             };

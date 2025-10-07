@@ -174,6 +174,7 @@ const PinLogic = {
         PINK_GROUP:      [255, 105, 180, 220],
         WHITE_GROUP:     [197, 110, 255, 255],
         MAGENTA_GROUP:   [255, 0, 255, 255],
+        GREY_GROUP: [25, 31, 52, 220],
         OKC_GROUP:       [0, 255, 255, 220]} as Record<PointType, [number, number, number, number]>,
 
     // Pin name to group mapping
@@ -190,6 +191,7 @@ const PinLogic = {
 
         // PURPLE_GROUP
         "Support Team": "PURPLE_GROUP",
+        "B": "PURPLE_GROUP",
 
         // GREEN_GROUP
         "Bale HFCGS": "GREEN_GROUP",
@@ -197,7 +199,7 @@ const PinLogic = {
         "NE": "GREEN_GROUP",
 
         // RED_GROUP
-        "HUB-112": "RED_GROUP",
+        "FOB1": "RED_GROUP",
         "Ohio Pin": "RED_GROUP",
 
         // TURQUOISE_GROUP
@@ -231,6 +233,8 @@ const PinLogic = {
         "La Moure": "WHITE_GROUP",
         "Norfolk": "WHITE_GROUP",
         "Yokosuka": "WHITE_GROUP",
+        
+        // MAGENTA_GROUP HFGCS
         "Beale HFCGS": "MAGENTA_GROUP",
  
         "Oklahoma City": "OKC_GROUP"
@@ -297,7 +301,7 @@ function getHeightByType(d: any): number {
         case "HF L": return 0.8;
         case "U L": return 0.7;
         case "HF": return 0.5;
-        default: 	return 0;
+        default: 	return 0.5;
     }
 }
 
@@ -856,7 +860,7 @@ async function preprocessData() {
                 if (fromName === 'Ohio Pin') {
                     return toLng > -90; // East of Mississippi
                 }
-                if (fromName === 'HUB-112') {
+                if (fromName === 'FOB1') {
                     return toLng < -90; // West of Mississippi
                 }
             }

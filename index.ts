@@ -188,6 +188,12 @@ const PinLogic = {
         "E61": "YELLOW_GROUP",
         "E62": "YELLOW_GROUP",
         "Point 6": "YELLOW_GROUP",
+        "E63": "YELLOW_GROUP",
+        "E64": "YELLOW_GROUP",
+        "E65": "YELLOW_GROUP",
+        "E66": "YELLOW_GROUP",
+        "E67": "YELLOW_GROUP",
+        "E68": "YELLOW_GROUP",
 
         // PURPLE_GROUP
         "Support Team": "PURPLE_GROUP",
@@ -547,7 +553,7 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         data: showPinLabels ? pinsData : [],
         pickable: false,
         getPosition: (d: any) => d.geometry.coordinates,
-        getText: (d: any) => {
+        getText: (d: any) => { 
             const name = d.properties?.name || '';
             const tech = d.properties?.tech;
             // Display name, and tech on a new line if it exists.
@@ -556,7 +562,7 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         },
         getColor: [255, 255, 255, 255],
         getSize: 14,
-        getPixelOffset: [0, 20], // Offset to appear below the pin/icon
+        getPixelOffset: (d: any) => d._labelOffset || [0, 20], // Use pre-calculated offset
         getFilterValue: (d: any) => activePointTypes.has(d._pinType) ? 1 : 0,
         filterRange: [1, 1],
         extensions: [dataFilterExt],
@@ -893,6 +899,26 @@ async function preprocessData() {
         p._pinType = getPinType(p); // Pre-calculate pin type for all points
         // All points are now treated as pins
         return p;
+    });
+
+    // Detect overlapping pins and assign label offsets
+    const pinsByLocation = new Map<string, any[]>();
+    processedPins.forEach(p => {
+        const coords = p.geometry.coordinates.join(',');
+        if (!pinsByLocation.has(coords)) {
+            pinsByLocation.set(coords, []);
+        }
+        pinsByLocation.get(coords)!.push(p);
+    });
+
+    pinsByLocation.forEach(pins => {
+        if (pins.length > 1) {
+            const width = 80; // Horizontal space between labels
+            const startOffset = -width * (pins.length - 1) / 2;
+            pins.forEach((p, i) => {
+                p._labelOffset = [startOffset + i * width, 20];
+            });
+        }
     });
 }
 

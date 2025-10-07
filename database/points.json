@@ -81,6 +81,41 @@
       "type": "Feature",
       "properties": { "name": "Ohio Pin" },
       "geometry": { "type": "Point", "coordinates": [-82.9988, 39.9612] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "E63" },
+      "geometry": { "type": "Point", "coordinates": [-117.686219, 42.078896] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "E64" },
+      "geometry": { "type": "Point", "coordinates": [-115.320093, 39.330707] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "E65" },
+      "geometry": { "type": "Point", "coordinates": [-118.886914, 36.835072] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "E66" },
+      "geometry": { "type": "Point", "coordinates": [-82.547014, 30.332469] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "E67" },
+      "geometry": { "type": "Point", "coordinates": [-73.1462, 44.4773] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "E68" },
+      "geometry": { "type": "Point", "coordinates": [-76.44905, 38.28625] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "NAOC" },
+      "geometry": { "type": "Point", "coordinates": [-95.139520, 46.254161] }
     }
   ]
 }

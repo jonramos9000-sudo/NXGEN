@@ -332,9 +332,9 @@
     "Connection_type": "HF"
   },
   {
-    "from": "LRT2",
-    "to": "E6",
-    "Connection_type": "VHF"
+    "from": "LRT1",
+    "to": "E61",
+    "Connection_type": "VLF"
   },
   {
     "from": "MLST",
@@ -465,5 +465,13 @@
     "from": "HUB-112", "to": "Point 14", "Connection_type": "TR"
   },
   {"from": "E61", "to": "Hub1", "Connection_type": "HF"
+  },
+  {"from": "Hub1", "to": "Hub2", "Connection_type": "HF"
+  },
+  {"from": "LRT2", "to": "HUB-122", "Connection_type": "HF"
+  },
+  {"from": "MLST", "to": "Hub1", "Connection_type": "SAT"
+  },
+  {"from": "MLST", "to": "sb", "Connection_type": "SAT"
   }
 ]

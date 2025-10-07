@@ -55,7 +55,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Hub" },
+      "properties": { "name": "Hub2" },
       "geometry": { "type": "Point", "coordinates": [-115.320093, 39.330707] }
     },
     {

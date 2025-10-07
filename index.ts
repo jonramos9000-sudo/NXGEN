@@ -260,8 +260,8 @@ function colorPinkByType(d: any): [number, number, number, number] {
 
 // ---------------------- Connection Styling & Labeling ----------------------
 
-type ConnType = "N" | "C" | "HF" | "RT" | "TR";
-const ALL_TYPES: string[] = ["N", "C", "HF", "RT", "TR"];
+type ConnType = "N" | "C" | "HF" | "RT" | "TR" | "SAT";
+const ALL_TYPES: string[] = ["N", "C", "HF", "RT", "TR", "SAT"];
 
 /** Flag to control visibility of on-map connection labels. */
 let showConnectionLabels = false;
@@ -278,6 +278,9 @@ function colorByTypeRGBA(d: any): [number, number, number, number] {
         case "C": return [0, 200, 0, 220];
         case "RT": return [200, 0, 0, 220]; // Now Red
         case "HF": return [255, 105, 180, 220]; // Now Pink
+        case "SAT": return [191, 0, 255, 220];
+        case "VLF": return [0, 128, 128, 200];
+
         default: 	return [128, 128, 128, 200];
     }
 }
@@ -293,11 +296,13 @@ function colorByTypeRGB(d: any): string {
 /**
  * Get tilt value for a connection feature based on type.
  */
-function tiltByType(d: any): number {
+function getHeightByType(d: any): number {
     switch (getConnType(d)) {
-        case "N": return 5;
-        case "C": return 10;
-        case "HF": return 0;
+        //case "N": return 5;
+        //case "C": return 10;
+        case "SAT": return 0.7;
+        case "VLF": return 0.5;
+        case "HF": return 0.6;
         default: 	return 0;
     }
 }
@@ -455,7 +460,7 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         getTargetPosition: (d: any) => getTargetPos(d),
         getSourceColor: colorByTypeRGBA,
         getTargetColor: (d: any) => colorByTypeRGBA(d), // Use same color for target for a solid line
-        getTilt: (d: any) => tiltByType(d),
+        getHeight: (d: any) => getHeightByType(d),
         getWidth: 2,
         pickable: true, // Allow picking (hover, click)
         greatCircle: true,
@@ -585,7 +590,9 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         { key: "C", 	label: "Green", 	color: "rgb(0,200,0)" },
         { key: "RT",    label: "Red",    color: "rgb(200,0,0)" }, // Now Red
         { key: "HF", label: "Pink", color: "rgb(255,105,180)" },
-        { key: "TR", label: "Orange", color: "rgb(255,165,0)" } 
+        { key: "TR", label: "Orange", color: "rgb(255,165,0)" },
+        { key: "SAT", label: "Purple", color: "rgb(128,0,128)" },
+        { key: "VLF", label: "Turquoise", color: "rgb(64,224,208)"}// Now Purple"} 
     ];
     const pinItems: { key: PointType; label: string; color: string }[] = [
         { key: "PINK_GROUP", 	 	label: "Pink", 	color: "rgb(255, 105, 180)" },

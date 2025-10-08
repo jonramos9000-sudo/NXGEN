@@ -188,15 +188,15 @@ const PinLogic = {
         // YELLOW_GROUP
         "H_AK": "YELLOW_GROUP",
         "Point 13": "YELLOW_GROUP",
-        "E61": "YELLOW_GROUP",
-        "E62": "YELLOW_GROUP",
+        "E6-1": "YELLOW_GROUP",
+        "E6-2": "YELLOW_GROUP",
         "Point 6": "YELLOW_GROUP",
-        "E63": "YELLOW_GROUP",
-        "E64": "YELLOW_GROUP",
-        "E65": "YELLOW_GROUP",
-        "E66": "YELLOW_GROUP",
-        "E67": "YELLOW_GROUP",
-        "E68": "YELLOW_GROUP",
+        "E6-3": "YELLOW_GROUP",
+        "E6-4": "YELLOW_GROUP",
+        "E6-5": "YELLOW_GROUP",
+        "E6-6": "YELLOW_GROUP",
+        "E6-7": "YELLOW_GROUP",
+        "E6-8": "YELLOW_GROUP",
 
         // PURPLE_GROUP
         "Support Team": "PURPLE_GROUP",

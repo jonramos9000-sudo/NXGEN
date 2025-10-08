@@ -14,13 +14,10 @@
 // Tell TypeScript that 'deck' is a global object, loaded via a script tag.
 declare const deck: any;
 
-import type * as GeoJSON from "geojson";
-// Deck.gl Layer constructors
-const ScatterplotLayer = deck.ScatterplotLayer;
-const ArcLayer = deck.ArcLayer;
-const GoogleMapsOverlay = deck.GoogleMapsOverlay;
-const DataFilterExtension = deck.DataFilterExtension;
-const TextLayer = deck.TextLayer; // TextLayer for persistent labels
+import type * as GeoJSON from 'geojson';
+
+// Destructure Deck.gl layer constructors for easier access.
+const { ScatterplotLayer, ArcLayer, GoogleMapsOverlay, DataFilterExtension, TextLayer } = deck;
 
 // ---------------------- Permanent Map Style (Hides All Native Labels) ----------------------
 
@@ -29,15 +26,12 @@ const PERMANENT_HIDE_LABELS_STYLE: google.maps.MapTypeStyle[] = [
     // Hide all labels by default
     { featureType: "all", elementType: "labels", stylers: [{ visibility: "off" }] },
     // Then, selectively turn on city labels
-    { featureType: "administrative.locality", elementType: "labels", stylers: [{ visibility: "on" }] },
+    {
+        featureType: "administrative.locality",
+        elementType: "labels",
+        stylers: [{ visibility: "on" }],
+    },
 
-    // The rest of the rules can remain to hide other features
-    { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
-    { featureType: "transit", elementType: "labels", stylers: [{ visibility: "off" }] },
-
-    // Target road labels explicitly
-    { featureType: "road", elementType: "labels", stylers: [{ visibility: "off" }] },
-    
     // Target road geometry/lines themselves, as they often carry associated labels
     { featureType: "road.highway", elementType: "geometry", stylers: [{ visibility: "off" }] },
     { featureType: "road.arterial", elementType: "geometry", stylers: [{ visibility: "off" }] },
@@ -54,7 +48,11 @@ const WHITE_MAP_STYLE: google.maps.MapTypeStyle[] = [
     { featureType: "poi", elementType: "all", stylers: [{ visibility: "off" }] },
     { featureType: "transit", elementType: "all", stylers: [{ visibility: "off" }] },
     // Hide street names and city labels
-    { featureType: "road", elementType: "labels", stylers: [{ visibility: "off" }] },
+    {
+        featureType: "road",
+        elementType: "labels",
+        stylers: [{ visibility: "off" }],
+    },
     { featureType: "administrative", elementType: "labels", stylers: [{ visibility: "off" }] },
 ];
 
@@ -64,7 +62,7 @@ const BLACK_MAP_STYLE: google.maps.MapTypeStyle[] = [
     { featureType: "all", elementType: "geometry", stylers: [{ color: "#212121" }] },
     { featureType: "water", elementType: "geometry", stylers: [{ color: "#000000" }] },
     { featureType: "road", elementType: "geometry", stylers: [{ color: "#333333" }] },
-    
+
     // Style labels for white contrast
     { featureType: "all", elementType: "labels.text.fill", stylers: [{ color: "#ffffff" }] },
     { featureType: "all", elementType: "labels.text.stroke", stylers: [{ color: "#212121" }] },
@@ -77,7 +75,11 @@ const BLACK_MAP_STYLE: google.maps.MapTypeStyle[] = [
     { featureType: "road", elementType: "labels", stylers: [{ visibility: "off" }] },
 
     // Make state lines visible and white
-    { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#ffffff" }, { weight: 0.5 }] },
+    {
+        featureType: "administrative",
+        elementType: "geometry.stroke",
+        stylers: [{ color: "#ffffff" }, { weight: 0.5 }],
+    },
 ];
 
 // ---------------------- Types & Data ----------------------
@@ -100,7 +102,8 @@ const POINTS_DATA_URL: string = "database/points.json";
 
 let processedConnections: any[] = [];
 let processedPins: any[] = [];
-let aggregatedConnections: any[] = []; // New array for aggregated connections
+let overlappingPins: any[] = [];
+let aggregatedConnections: any[] = []; // Holds connections aggregated by source/target pair.
 
 // ---------------------- Helper Functions ----------------------
 
@@ -113,7 +116,7 @@ function getProp(d: any, key: string): any {
 
 /**
  * Normalize and return the connection type for a feature.
- */
+ * Converts types like "N_TYPE" to "N" and ensures the result is uppercase. */
 function getConnType(d: any): string {
     const t = getProp(d, "Connection_type") ?? getProp(d, "connection_type");
     const up = String(t ?? "").trim().toUpperCase();
@@ -136,6 +139,42 @@ function toggleDisplay(el: HTMLElement, force?: boolean) {
     el.style.display = shouldShow ? "flex" : "none";
 }
 
+/**
+ * Generates an SVG data URL for a pie chart icon.
+ * @param colors - An array of RGBA color arrays for the pie slices.
+ * @returns A string containing the data URL for the SVG icon.
+ */
+function createPieIcon(colors: [number, number, number, number][]): string {
+    const radius = 12;
+    const diameter = radius * 2;
+    const numSlices = colors.length;
+
+    if (numSlices === 0) return '';
+    if (numSlices === 1) {
+        const [r, g, b, a] = colors[0];
+        return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${diameter}' height='${diameter}' viewBox='0 0 ${diameter} ${diameter}'%3E%3Ccircle cx='${radius}' cy='${radius}' r='${radius}' fill='rgba(${r},${g},${b},${a/255})' stroke='black' stroke-width='1' /%3E%3C/svg%3E`;
+    }
+
+    const sliceAngle = 360 / numSlices;
+    let svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${diameter}' height='${diameter}' viewBox='0 0 ${diameter} ${diameter}'>`;
+
+    let startAngle = -90;
+    for (let i = 0; i < numSlices; i++) {
+        const endAngle = startAngle + sliceAngle;
+        const [r, g, b, a] = colors[i];
+        const x1 = radius + radius * Math.cos(Math.PI * startAngle / 180);
+        const y1 = radius + radius * Math.sin(Math.PI * startAngle / 180);
+        const x2 = radius + radius * Math.cos(Math.PI * endAngle / 180);
+        const y2 = radius + radius * Math.sin(Math.PI * endAngle / 180);
+        const largeArcFlag = sliceAngle > 180 ? 1 : 0;
+        svg += `<path d='M${radius},${radius} L${x1},${y1} A${radius},${radius} 0 ${largeArcFlag},1 ${x2},${y2} Z' fill='rgba(${r},${g},${b},${a/255})' stroke='black' stroke-width='1' />`;
+        startAngle = endAngle;
+    }
+
+    svg += `</svg>`;
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 // ---------------------- Pin Type Logic ----------------------
 
 /** Defines the possible color-coded groups for pins. */
@@ -151,9 +190,7 @@ type PointType =
     | "PINK_GROUP"
     | "WHITE_GROUP"
     | "OKC_GROUP"
-    | "MAGENTA_GROUP"
-    | "GREY_GROUP"
-    ;
+    | "MAGENTA_GROUP" | "GREY_GROUP";
 
 /**
  * Encapsulates pin group logic for mapping pin names to colors and types.
@@ -161,26 +198,33 @@ type PointType =
 const PinLogic = {
     ALL_POINT_TYPES: [
         "RED_GROUP", "TURQUOISE_GROUP", "YELLOW_GROUP", "GREEN_GROUP",
-        "PURPLE_GROUP", "ORANGE_GROUP", "BLUE_GROUP", "VIOLET_GROUP", "PINK_GROUP", "WHITE_GROUP",
-        "MAGENTA_GROUP", "OKC_GROUP", "GREY_GROUP"] as PointType[],
+        "PURPLE_GROUP", "ORANGE_GROUP", "BLUE_GROUP", "VIOLET_GROUP",
+        "PINK_GROUP", "WHITE_GROUP", "MAGENTA_GROUP", "OKC_GROUP", "GREY_GROUP",
+    ] as PointType[],
 
     // RGBA color map for each pin group
     PIN_COLOR_MAP: {
-        RED_GROUP:       [200, 0, 0, 220],
+        RED_GROUP: [200, 0, 0, 220],
         TURQUOISE_GROUP: [64, 224, 208, 220],
-        YELLOW_GROUP:    [255, 255, 0, 220],
-        GREEN_GROUP:     [0, 128, 0, 220],
-        PURPLE_GROUP:    [128, 0, 128, 220],
-        ORANGE_GROUP:    [255, 165, 0, 220],
-        BLUE_GROUP:      [0, 120, 255, 220],
-        VIOLET_GROUP:    [130, 42, 245, 220],
-        PINK_GROUP:      [255, 105, 180, 220],
-        WHITE_GROUP:     [197, 110, 255, 255],
-        MAGENTA_GROUP:   [255, 0, 255, 255],
+        YELLOW_GROUP: [255, 255, 0, 220],
+        GREEN_GROUP: [0, 128, 0, 220],
+        PURPLE_GROUP: [128, 0, 128, 220],
+        ORANGE_GROUP: [255, 165, 0, 220],
+        BLUE_GROUP: [0, 120, 255, 220],
+        VIOLET_GROUP: [130, 42, 245, 220],
+        PINK_GROUP: [255, 105, 180, 220],
+        WHITE_GROUP: [197, 110, 255, 255],
+        MAGENTA_GROUP: [255, 0, 255, 255],
         GREY_GROUP: [169, 169, 169, 220],
-        OKC_GROUP:       [0, 255, 255, 220]} as Record<PointType, [number, number, number, number]>,
+        OKC_GROUP: [0, 255, 255, 220],
+    } as Record<PointType, [number, number, number, number]>,
 
     // Pin name to group mapping
+    // NOTE: There is a typo in the original data. "Site A", "Site B", and "Site C"
+    // are assigned to ORANGE_GROUP under a WHITE_GROUP comment block. This has been preserved.
+    // Similarly, "Beale HFCGS" is assigned to MAGENTA_GROUP under a comment for that group,
+    // but "Bale HFCGS" is assigned to GREEN_GROUP.
+    // Any pin name not found in this map will default to BLUE_GROUP.
     PIN_LOOKUP_MAP: {
         // VIOLET_GROUP
         "sb": "VIOLET_GROUP",
@@ -213,11 +257,11 @@ const PinLogic = {
 
         // TURQUOISE_GROUP
         "PENT": "TURQUOISE_GROUP",
-        "COS": 	"TURQUOISE_GROUP",
-        "TB": 	"TURQUOISE_GROUP",
-        "RR": 	"TURQUOISE_GROUP",
-        "AZ": 	"TURQUOISE_GROUP",
-        "IP": 	"TURQUOISE_GROUP",
+        "COS": "TURQUOISE_GROUP",
+        "TB": "TURQUOISE_GROUP",
+        "RR": "TURQUOISE_GROUP",
+        "AZ": "TURQUOISE_GROUP",
+        "IP": "TURQUOISE_GROUP",
 
         // PINK_GROUP
         "SAN": "PINK_GROUP",
@@ -248,16 +292,14 @@ const PinLogic = {
 
         "LRT1": "GREY_GROUP",
         "LRT2": "GREY_GROUP",
- 
+
         "Oklahoma City": "OKC_GROUP"
-        
+
     } as Record<string, PointType>,
 };
 
 let activePointTypes = new Set<PointType>();
-
-let activeTypes = new Set<string>(); // Initial active type set
-
+let activeTypes = new Set<string>();
 
 /**
  * Determine pin type (group) from a feature.
@@ -269,7 +311,7 @@ function getPinType(d: any): PointType {
 
 /**
  * Get RGBA color for a pin feature based on type.
- */
+ * Defaults to BLUE_GROUP color if the type is not found. */
 function colorPinkByType(d: any): [number, number, number, number] {
     return PinLogic.PIN_COLOR_MAP[getPinType(d)] ?? [0, 120, 255, 220]; // Default to BLUE_GROUP color
 }
@@ -289,17 +331,17 @@ let showPinLabels = false;
  */
 function colorByTypeRGBA(d: any): [number, number, number, number] {
     switch (getConnType(d)) {
-        case "N":  return [0, 128, 200, 220]; // Blue
+        case "N": return [0, 128, 200, 220]; // Blue
         case "TR": return [255, 165, 0, 220]; // Orange
         case "C": return [0, 200, 0, 220];
         case "RT": return [200, 0, 0, 220]; // Now Red
         case "HF": return [255, 105, 180, 220]; // Now Pink
         case "SAT": return [128, 0, 128, 220];
         case "HF L": return [255, 255, 0, 220];
-        case "U L": return [8, 232, 222, 220];
-        case "SL": return[255, 0, 127, 220];
+        case "U L": return [8, 232, 222, 220]; // Turquoise-like
+        case "SL": return [255, 0, 127, 220]; // Hot Pink
 
-        default: 	return [128, 128, 128, 200];
+        default: return [128, 128, 128, 200]; // Default Grey
     }
 }
 
@@ -309,18 +351,18 @@ function colorByTypeRGBA(d: any): [number, number, number, number] {
 function getHeightByType(d: any): number {
     switch (getConnType(d)) {
         //case "N": return 5;
-        //case "C": return 10;
-        case "SL" : return 0.96;
+        //case "C": return 10; // Example of unused height
+        case "SL": return 0.96;
         case "SAT": return 0.9;
         case "HF L": return 0.8;
         case "U L": return 0.7;
         case "HF": return 0.5;
-        default: 	return 0.5;
+        default: return 0.5;
     }
 }
 
 /**
- * Get source coordinates for a connection feature.
+ * Get source coordinates for a connection feature, using pre-processed `_sourcePos` if available.
  */ 
 function getSourcePos(d: any): [number, number] {
     const src = d._sourcePos ?? getProp(d, "from")?.geometry?.coordinates ?? getProp(d, "coordinates")?.[0];
@@ -328,7 +370,7 @@ function getSourcePos(d: any): [number, number] {
 }
 
 /**
- * Get target coordinates for a connection feature.
+ * Get target coordinates for a connection feature, using pre-processed `_targetPos` if available.
  */
 function getTargetPos(d: any): [number, number] {
     const tgt = d._targetPos ?? getProp(d, "to")?.geometry?.coordinates ?? getProp(d, "coordinates")?.slice(-1)[0];
@@ -355,7 +397,7 @@ function asLngLat(obj: any): [number, number] | null {
     }
     // Check if coordinates are nested inside properties (e.g., from connection source data)
     if (obj?.properties) return asLngLat(obj.properties);
-    
+
     return null;
 }
 
@@ -367,12 +409,12 @@ function getLabelMidpoint(d: any): [number, number] {
     const s = getSourcePos(d);
     const t = getTargetPos(d);
     if (!Array.isArray(s) || !Array.isArray(t)) return [0, 0];
-    
+
     // Simple midpoint calculation
     const lng = (s[0] + t[0]) / 2;
     const lat = (s[1] + t[1]) / 2;
-    
-    // Return world coordinate [lng, lat]
+
+    // Return world coordinate [lng, lat]. Note: This does not account for the arc's curve.
     return [lng, lat];
 }
 
@@ -396,17 +438,16 @@ function getAggregatedColor(d: any): [number, number, number, number] {
 // ---------------------- Filtering (GPU) ----------------------
 
 // Coordinates for specific locations used in filtering.
-const HUB_LNG 	= -82.492696;
-const HUB_LAT 	= 27.8602;
-const HUB_EPS 	= 1e-6;
+const HUB_LNG = -82.492696;
+const HUB_LAT = 27.8602;
+const HUB_EPS = 1e-6;
 let hideHubConnections = false;
 
 const HUB2_LNG = 9.077841; // EU
 const HUB2_LAT = 48.734481;
 let hideHub2Connections = false;
 
-let showAggregatedConnections = false; // New state for toggling aggregated layer
-
+let showAggregatedConnections = false; // State for toggling aggregated layer
 
 /** State for the demonstration sequence. */
 let demoStep = 0;
@@ -456,8 +497,8 @@ function filterKey() {
         `hub1:${hideHubConnections ? 1 : 0}`,
         `hub2:${hideHub2Connections ? 1 : 0}`,
         Array.from(activePointTypes).sort().join(","),
-        `aggregated:${showAggregatedConnections ? 1 : 0}` // Add aggregated connections state
-    ].join("|") + `|connLabels:${showConnectionLabels ? 1 : 0}` + 
+        `aggregated:${showAggregatedConnections ? 1 : 0}`, // Add aggregated connections state
+    ].join("|") + `|connLabels:${showConnectionLabels ? 1 : 0}` +
       `|pinLabels:${showPinLabels ? 1 : 0}`;
 }
 
@@ -478,8 +519,8 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         const targetPinTypeVisible = activePointTypes.has(d._targetPinType);
         return (
             activeTypes.has(d._connType) &&
-            (!hideHubConnections 	|| !d._isHub1) 	&&
-            (!hideHub2Connections || !d._isHub2) &&
+            (!hideHubConnections || !d._isHub1) &&
+            (!hideHub2Connections || !d._isHub2) && // Corrected inconsistent tabbing
             sourcePinTypeVisible && targetPinTypeVisible
         ) ? 1 : 0;
     };
@@ -487,7 +528,7 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
     // Layer for the main connection lines (arcs).
     const connectionsLayer = new ArcLayer({
         id: "flights",
-        // Hide this layer when aggregated connections are shown
+        // Hide this layer when aggregated connections are shown by providing empty data.
         data: showAggregatedConnections ? [] : connectionsData,
         getSourcePosition: (d: any) => getSourcePos(d),
         getTargetPosition: (d: any) => getTargetPos(d),
@@ -534,26 +575,26 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         // Only display labels if showConnectionLabels is true AND aggregated view is off
         data: showConnectionLabels && !showAggregatedConnections ? connectionsData : [],
         pickable: false,
-        // Position label at the midpoint of the connection's chord
+        // Position label at the midpoint of the connection's chord.
         getPosition: getLabelMidpoint,
         getText: (d: any) => {
             const fromObj = d?.from;
-            const toObj 	= d?.to;
-            
+            const toObj = d?.to;
+
             const fromName = fromObj?.properties?.name ?? "Unknown Start";
-            const toName 	= toObj?.properties?.name 	?? "Unknown End";
+            const toName = toObj?.properties?.name ?? "Unknown End";
             const fromTech = fromObj?.properties?.tech;
-            const toTech 	= toObj?.properties?.tech;
+            const toTech = toObj?.properties?.tech;
             const connType = getConnType(d);
 
             // Multi-line string with start/end points and type.
             return `\u25b6 START: ${fromName}${fromTech ? ` (${fromTech})` : ''}\n\u25b6 END: ${toName}${toTech ? ` (${toTech})` : ''}\n(${connType})`;
         },
-        // Use background for the black box effect
+        // Use background for a "black box" effect to improve readability.
         background: true,
-        getBackgroundColor: [0, 0, 0, 200], // Black background (Opacity 200/255)
-        getColor: [255, 255, 255, 255], 		// White text
-        
+        getBackgroundColor: [0, 0, 0, 200], // Semi-transparent black background
+        getColor: [255, 255, 255, 255], // White text
+
         // Text rendering settings for clarity and performance.
         getSize: 15,
         fontSettings: {
@@ -561,40 +602,45 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         },
         characterSet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,:()[]- \n\u25b6', 
         
-        getPixelOffset: [0, -10], // Offset to appear slightly above the line
+        getPixelOffset: [0, -10], // Offset to appear slightly above the line.
         getAlignmentBaseline: 'center',
         getTextAnchor: 'middle',
-        padding: [4, 6], 
-        
-        // Use the same filtering logic as the ArcLayer to ensure labels only appear on visible lines
+        padding: [4, 6],
+
+        // Use the same filtering logic as the ArcLayer to ensure labels only appear on visible lines.
         getFilterValue: getConnectionFilterValue,
         filterRange: [1, 1],
         extensions: [dataFilterExt],
         updateTriggers: { getFilterValue: filterKey() },
-        
+
         // Ensure connection labels are drawn on top of other layers.
-        getZLevel: 2, 
+        getZLevel: 2,
         parameters: {
-            depthTest: false, // Disables depth culling so the TextLayer is always visible
+            depthTest: false, // Disables depth culling so the TextLayer is always visible.
             depthMask: false
         }
     });
 
     // Layer for circular "pin" markers.
-    const pinsLayer = new ScatterplotLayer({
+    const pinsLayer = new deck.IconLayer({
         id: "pins",
-        data: pinsData,
+        data: overlappingPins,
         pickable: true,
         autoHighlight: true,
+        // Set to false to make icons lie flat on the map surface
+        billboard: false,
+        iconAtlas: null, // Using data URLs, so no atlas needed
+        getIcon: (d: any) => ({
+            url: d.iconUrl,
+            width: 24,
+            height: 24,
+            anchorY: 24,
+        }),
         getPosition: (d: any) => d.geometry.coordinates,
-        radiusUnits: "pixels",
-        radiusMinPixels: 11,
-        radiusMaxPixels: 18,
-        getFillColor: (d: any) => colorPinkByType(d),
-        stroked: true,
-        getLineColor: [0, 0, 0, 200],
-        lineWidthMinPixels: 1,
-        getFilterValue: (d: any) => activePointTypes.has(d._pinType) ? 1 : 0,
+        sizeScale: 1,
+        getSize: 24,
+        // Filter based on whether any of the constituent pin types are active
+        getFilterValue: (d: any) => d.pinTypes.some((type: PointType) => activePointTypes.has(type)) ? 1 : 0,
         filterRange: [1, 1],
         extensions: [dataFilterExt],
         updateTriggers: { getFilterValue: filterKey() }
@@ -607,7 +653,7 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         data: showPinLabels ? pinsData : [],
         pickable: false,
         getPosition: (d: any) => d.geometry.coordinates,
-        getText: (d: any) => { 
+        getText: (d: any) => {
             const name = d.properties?.name || '';
             const tech = d.properties?.tech;
             // Display name, and tech on a new line if it exists.
@@ -616,18 +662,18 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         },
         getColor: [255, 255, 255, 255],
         getSize: 14,
-        getPixelOffset: (d: any) => d._labelOffset || [0, 20], // Use pre-calculated offset
+        getPixelOffset: (d: any) => d._labelOffset || [0, 20], // Use pre-calculated offset for overlapping pins.
         getFilterValue: (d: any) => activePointTypes.has(d._pinType) ? 1 : 0,
         filterRange: [1, 1],
         extensions: [dataFilterExt],
         updateTriggers: { getFilterValue: filterKey() },
         background: true,
         getBackgroundColor: [0, 0, 0, 200], // Dark background
-        padding: [4, 6], 
-        getAlignmentBaseline: 'top', 
+        padding: [4, 6],
+        getAlignmentBaseline: 'top',
         getTextAnchor: 'middle',
-        
-        getZLevel: 0, 
+
+        getZLevel: 0,
         parameters: {
             depthTest: true, 
             depthMask: true 	
@@ -644,30 +690,30 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
  */
 function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
     const connItems: { key: string; label: string; color: string }[] = [
-        { key: "N", 	label: "Blue", 	color: "rgb(0,128,200)" }, // Blue
-        { key: "C", 	label: "Green", 	color: "rgb(0,200,0)" },
-        { key: "RT",    label: "Red",    color: "rgb(200,0,0)" }, // Now Red
+        { key: "N", label: "Blue", color: "rgb(0,128,200)" },
+        { key: "C", label: "Green", color: "rgb(0,200,0)" },
+        { key: "RT", label: "Red", color: "rgb(200,0,0)" },
         { key: "HF", label: "Pink", color: "rgb(255,105,180)" },
         { key: "TR", label: "Orange", color: "rgb(255,165,0)" },
-        { key: "SAT", label: "Purple", color: "rgb(128,0,128)" }, // Purple
-        { key: "HF L", label: "Yellow", color: "rgb(255, 255, 0)"},
-        { key: "U L", label: "Turquoise", color: "rgb(64,224,208)"},
-        { key: "SL", label: "Hot Pink", color: "rgb(255,0,127)"}
+        { key: "SAT", label: "Purple", color: "rgb(128,0,128)" },
+        { key: "HF L", label: "Yellow", color: "rgb(255, 255, 0)" },
+        { key: "U L", label: "Turquoise", color: "rgb(64,224,208)" },
+        { key: "SL", label: "Hot Pink", color: "rgb(255,0,127)" },
     ];
     const pinItems: { key: PointType; label: string; color: string }[] = [
-        { key: "PINK_GROUP", 	 	label: "Pink", 	color: "rgb(255, 105, 180)" },
-        { key: "VIOLET_GROUP", 		label: "Violet", color: "rgb(130, 42, 245)" },
-        { key: "RED_GROUP", 	 	label: "Red", 	color: "rgb(200, 0, 0)" },
-        { key: "TURQUOISE_GROUP", label: "Turquoise", 	color: "rgb(64, 224, 208)" },
-        { key: "YELLOW_GROUP", 		label: "Yellow", 	color: "rgb(255, 255, 0)" },
-        { key: "GREEN_GROUP", 		label: "Green", 	color: "rgb(0, 128, 0)" },
-        { key: "PURPLE_GROUP", 		label: "Purple", 	color: "rgb(128, 0, 128)" },
-        { key: "ORANGE_GROUP", 		label: "Orange", 	color: "rgb(255, 165, 0)" },
-        { key: "BLUE_GROUP", 		label: "Blue", 	color: "rgb(0, 120, 255)" },
-        { key: "WHITE_GROUP", 		label: "White", 	color: "rgb(197, 110, 255)" },
-        { key: "OKC_GROUP",         label: "Cyan",   color: "rgb(0, 255, 255)" },
-        { key: "MAGENTA_GROUP", 	label: "Magenta", color: "rgb(255, 0, 255)" },
-        { key: "GREY_GROUP", 		label: "Grey", 	color: "rgb(169, 169, 169)" },
+        { key: "PINK_GROUP", label: "Pink", color: "rgb(255, 105, 180)" },
+        { key: "VIOLET_GROUP", label: "Violet", color: "rgb(130, 42, 245)" },
+        { key: "RED_GROUP", label: "Red", color: "rgb(200, 0, 0)" },
+        { key: "TURQUOISE_GROUP", label: "Turquoise", color: "rgb(64, 224, 208)" },
+        { key: "YELLOW_GROUP", label: "Yellow", color: "rgb(255, 255, 0)" },
+        { key: "GREEN_GROUP", label: "Green", color: "rgb(0, 128, 0)" },
+        { key: "PURPLE_GROUP", label: "Purple", color: "rgb(128, 0, 128)" },
+        { key: "ORANGE_GROUP", label: "Orange", color: "rgb(255, 165, 0)" },
+        { key: "BLUE_GROUP", label: "Blue", color: "rgb(0, 120, 255)" },
+        { key: "WHITE_GROUP", label: "White", color: "rgb(197, 110, 255)" },
+        { key: "OKC_GROUP", label: "Cyan", color: "rgb(0, 255, 255)" },
+        { key: "MAGENTA_GROUP", label: "Magenta", color: "rgb(255, 0, 255)" },
+        { key: "GREY_GROUP", label: "Grey", color: "rgb(169, 169, 169)" },
     ];
 
     const controlsContainer = document.createElement('div');
@@ -679,7 +725,7 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         <button id="filters-toggle" title="Show/Hide filters" style="position: absolute; z-index: 10; top: 60px; left: 220px; padding:8px 10px; border:1px solid #ccc; border-radius:8px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.15); font: 13px system-ui, sans-serif; cursor:pointer;">Filters</button>
         <div id="controls-container" style="position:absolute; z-index:5; top:60px; left:10px; font: 13px system-ui, sans-serif; display:flex; flex-direction:column; gap:10px; max-width: 200px;">
             
-            <div id="connection-legend-box" class="legend-box">
+            <div class="legend-box">
                 <h2 style="font-size:16px; margin:0;">Connections</h2>
                 <div id="conn-button-section" class="button-section">
                     <button id="all-conn-btn">All / None</button>
@@ -764,7 +810,7 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
     document.getElementById('filters-toggle')?.addEventListener('click', () => {
         const container = document.getElementById('controls-container');
         if (container) toggleDisplay(container);
-    });
+    }); // Note: toggleDisplay is defined at the top of the file.
     
     // Function to handle map layer update
     const updateMap = () => {
@@ -796,14 +842,13 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
             updateMap();
         });
     });
-    
+
     // Listener for the new connection label button
     connLabelButton.addEventListener('click', () => {
         showConnectionLabels = !showConnectionLabels;
         connLabelButton.textContent = showConnectionLabels ? 'Hide Details' : 'Show Details';
         updateMap();
     });
-
 
     document.getElementById('all-pins-btn')?.addEventListener('click', () => {
         const isAllActive = activePointTypes.size === PinLogic.ALL_POINT_TYPES.length;
@@ -817,7 +862,6 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         showAggregatedConnections = (e.target as HTMLInputElement).checked;
         updateMap();
     });
-
 
     // Logic for the "Show Labels" button to toggle the persistent TextLayer for PINS
     document.getElementById('tooltip-btn')?.addEventListener('click', (e) => {
@@ -843,7 +887,6 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
 function addCoordinatesUI() {
     const coordsContainer = document.createElement("div");
     coordsContainer.id = "coords-container";
-    // *** MODIFIED: Changed position from 'left: 10px;' to 'right: 10px;' ***
     coordsContainer.style.cssText = `
         position: absolute; z-index: 5; bottom: 30px; right: 60px;
         background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.15);
@@ -907,7 +950,7 @@ async function preprocessData() {
     const allPoints = (pointsJson?.type === "FeatureCollection" ? pointsJson.features : pointsJson);
     const pointMap = new Map<string, Feature>();
     allPoints.forEach((p: Feature) => {
-        const name = getPointName(p);
+        const name = getPointName(p); // getPointName handles nested properties
         if (name) pointMap.set(name, p);
     });
 
@@ -918,7 +961,7 @@ async function preprocessData() {
         geometry: { type: "Point", coordinates: [HUB2_LNG, HUB2_LAT] }
     });
 
-    // Pre-process connections
+    // Pre-process connections: filter, resolve point references, and pre-calculate properties.
     processedConnections = connectionsJson
         .filter((c: any) => {
             const connType = getConnType(c);
@@ -926,7 +969,7 @@ async function preprocessData() {
                 const fromName = getProp(c, "from");
                 const toPoint = pointMap.get(getProp(c, "to"));
                 const toLng = toPoint?.geometry.type === 'Point' ? toPoint.geometry.coordinates[0] : undefined;
-                if (toLng == null) return true; // Keep if destination is unknown
+                if (toLng == null) return true; // Keep if destination is unknown.
 
                 // Mississippi River is approximately at -90 longitude
                 if (fromName === 'Ohio Pin') {
@@ -935,7 +978,7 @@ async function preprocessData() {
                 if (fromName === 'FOB1') {
                     return toLng < -90; // West of Mississippi
                 }
-            }
+            } // Note: This logic seems very specific and might need review if data changes.
             return true; // Keep all other connections
         })
         .map((c: any) => {
@@ -958,13 +1001,38 @@ async function preprocessData() {
                 _isHub2: connectsToHub2({ _sourcePos: (fromPoint?.geometry as GeoJSON.Point)?.coordinates, _targetPos: (toPoint?.geometry as GeoJSON.Point)?.coordinates })
             };
         })
-        .filter(c => c._sourcePos && c._targetPos); // Filter out connections with missing points
+        .filter(c => c._sourcePos && c._targetPos); // Filter out connections with missing point coordinates.
 
-    // Pre-process and split points into pins and icons
+    // Pre-process points to calculate and cache their type.
     processedPins = allPoints.map((p: any) => {
         p._pinType = getPinType(p); // Pre-calculate pin type for all points
-        // All points are now treated as pins
+        // All points are treated as pins.
         return p;
+    });
+
+    // --- Group overlapping pins and create pie chart icons ---
+    const pinsByLocation = new Map<string, any[]>();
+    processedPins.forEach(p => {
+        const coords = p.geometry.coordinates.join(',');
+        if (!pinsByLocation.has(coords)) {
+            pinsByLocation.set(coords, []);
+        }
+        pinsByLocation.get(coords)!.push(p);
+    });
+
+    overlappingPins = Array.from(pinsByLocation.values()).map(pins => {
+        const firstPin = pins[0];
+        const pinTypes = pins.map(p => p._pinType);
+        const colors = pins.map(p => colorPinkByType(p));
+        const iconUrl = createPieIcon(colors);
+
+        return {
+            ...firstPin, // Use first pin for position and base properties
+            count: pins.length,
+            pinTypes: pinTypes,
+            originalPins: pins,
+            iconUrl: iconUrl,
+        };
     });
 
     // Aggregate connections for the new layer
@@ -983,7 +1051,7 @@ async function preprocessData() {
 
     processedConnections.forEach(conn => {
         // Create a canonical key for each from/to pair of coordinates,
-        // regardless of direction, by sorting them before creating the key.
+        // regardless of direction, by sorting the coordinate strings before creating the key.
         const pos1Str = conn._sourcePos.join(',');
         const pos2Str = conn._targetPos.join(',');
         const key = [pos1Str, pos2Str].sort().join('|');
@@ -1013,25 +1081,28 @@ async function preprocessData() {
         _connTypes: Array.from(agg._connTypes) // Convert Set to Array for easier use
     }));
 
-    // Detect overlapping pins and assign label offsets
-    const pinsByLocation = new Map<string, any[]>();
-    processedPins.forEach(p => {
-        const coords = p.geometry.coordinates.join(',');
-        if (!pinsByLocation.has(coords)) {
-            pinsByLocation.set(coords, []);
-        }
-        pinsByLocation.get(coords)!.push(p);
-    });
+    // --- Assign label offsets for overlapping pins ---
+    overlappingPins.forEach(pinGroup => {
+        if (pinGroup.count > 1) { // Only apply special offsets for overlapping pins
+            const numSlices = pinGroup.count;
+            const sliceAngle = 360 / numSlices;
+            const offsetRadius = 45; // Distance of the label from the center of the icon
 
-    pinsByLocation.forEach(pins => {
-        if (pins.length > 1) {
-            const width = 80; // Horizontal space between labels
-            const startOffset = -width * (pins.length - 1) / 2;
-            pins.forEach((p, i) => {
-                p._labelOffset = [startOffset + i * width, 20];
+            pinGroup.originalPins.forEach((p: any, i: number) => {
+                // Calculate the angle for the middle of the slice
+                const midAngle = -90 + (i * sliceAngle) + (sliceAngle / 2);
+                const midAngleRad = midAngle * (Math.PI / 180);
+
+                // Convert polar coordinates (radius, angle) to Cartesian coordinates (x, y) for the offset
+                const offsetX = offsetRadius * Math.cos(midAngleRad);
+                const offsetY = offsetRadius * Math.sin(midAngleRad);
+                p._labelOffset = [offsetX, offsetY];
             });
         }
     });
+
+    // Flatten originalPins back into processedPins for the label layer
+    processedPins = overlappingPins.flatMap(group => group.originalPins);
 }
 
 // ---------------------- Initialization ----------------------
@@ -1224,7 +1295,7 @@ async function initMap(): Promise<void> {
             map.panTo({ lat: okcCoords[1], lng: okcCoords[0] });
             map.setZoom(6);
         }
-        updateCheckboxes();
+        updateCheckboxes(); // Sync UI with new filter state
         layerUpdateCallback();
 
         await delay(2000); // Wait for 2 seconds
@@ -1256,7 +1327,7 @@ async function initMap(): Promise<void> {
         runDemonstration();
     });
 
-    map.addListener("click", (e: google.maps.MapMouseEvent) => {
+    map.addListener('click', (e: google.maps.MapMouseEvent) => {
         const ll = e.latLng;
         if (ll) updateCoordinatesUI(ll.lat(), ll.lng());
     });
@@ -1270,7 +1341,22 @@ async function initMap(): Promise<void> {
             if (!object) return null;
             
             // Tooltip for pins and icons.
-            if (layer?.id === "pins") {
+            if (layer?.id === 'pins' && object.count > 1) {
+                const pinList = object.originalPins.map((p: any) => {
+                    const name = p?.properties?.name ?? "Pin";
+                    const [lng, lat] = asLngLat(p) ?? [];
+                    return `<div><b>${name}</b></div><div>(Lat: ${fmt(lat)}, Lng: ${fmt(lng)})</div>`;
+                }).join('<hr style="margin: 2px 0; border-color: #555;">');
+                return {
+                    html: `
+                        <div style="font-family:system-ui; font-size:12px; line-height:1.35; color:white; max-width: 200px;">
+                            <div><b>${object.count} overlapping pins</b></div>
+                            <hr style="margin: 4px 0; border-color: #777;">
+                            ${pinList}
+                        </div>
+                    `
+                };
+            } else if (layer?.id === 'pins') {
                 const name = object?.properties?.name ?? (layer?.id === "pins" ? "Pin" : "Icon");
                 const [lng, lat] = asLngLat(object) ?? [];
                 return {
@@ -1285,7 +1371,7 @@ async function initMap(): Promise<void> {
             }
             
             // Tooltip for aggregated connections
-            if (layer?.id === "aggregated-connections") {
+            if (layer?.id === 'aggregated-connections') {
                 const fromName = object?.from?.properties?.name ?? "Unknown Start";
                 const toName = object?.to?.properties?.name ?? "Unknown End";
                 const fromTech = object?.from?.properties?.tech;
@@ -1306,12 +1392,12 @@ async function initMap(): Promise<void> {
 
             // Tooltip for connections.
             const fromObj = object?.from;
-            const toObj 	= object?.to;
+            const toObj = object?.to;
             const fromName = fromObj?.properties?.name ?? "From";
-            const toName 	= toObj?.properties?.name 	?? "To";
+            const toName = toObj?.properties?.name ?? "To";
             const connType = getConnType(object);
             const fromTech = fromObj?.properties?.tech;
-            const toTech 	= toObj?.properties?.tech;
+            const toTech = toObj?.properties?.tech;
             return {
                 html: `
                     <div style="font-family:system-ui; font-size:12px; line-height:1.35; color: white">

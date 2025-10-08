@@ -186,7 +186,6 @@ const PinLogic = {
         "sb": "VIOLET_GROUP",
 
         // YELLOW_GROUP
-        "H_AK": "YELLOW_GROUP",
         "Point 13": "YELLOW_GROUP",
         "E6-1": "YELLOW_GROUP",
         "E6-2": "YELLOW_GROUP",
@@ -244,6 +243,7 @@ const PinLogic = {
         "Yokosuka": "WHITE_GROUP",
 
         // MAGENTA_GROUP HFGCS
+        "H_AK": "MAGENTA_GROUP",
         "Beale HFCGS": "MAGENTA_GROUP",
 
         "LRT1": "GREY_GROUP",
@@ -528,6 +528,64 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         updateTriggers: { getFilterValue: filterKey() }
     });
 
+    // New layer for persistent on-map aggregated connection labels.
+    const aggregatedConnectionTextLayer = new TextLayer({
+        id: 'aggregated-connection-labels',
+        // Only display labels if showConnectionLabels is true AND aggregated view is on
+        data: showConnectionLabels && showAggregatedConnections ? aggregatedConnections : [],
+        pickable: false,
+        // Position label at the midpoint of the connection's chord
+        getPosition: getLabelMidpoint,
+        getText: (d: any) => {
+            const fromObj = d?.from;
+            const toObj 	= d?.to;
+            
+            const fromName = fromObj?.properties?.name ?? "Unknown Start";
+            const toName 	= toObj?.properties?.name 	?? "Unknown End";
+            const fromTech = fromObj?.properties?.tech;
+            const toTech 	= toObj?.properties?.tech;
+            const connTypes = d?._connTypes?.join(', ') ?? "N/A";
+            const count = d?._count ?? 0;
+
+            // Multi-line string with start/end points, aggregated count, and types.
+            return `\u25b6 ${fromName}${fromTech ? ` (${fromTech})` : ''}\n\u25b6 ${toName}${toTech ? ` (${toTech})` : ''}\n(${count} connections: ${connTypes})`;
+        },
+        // Use background for the black box effect
+        background: true,
+        getBackgroundColor: [0, 0, 0, 200], // Black background (Opacity 200/255)
+        getColor: [255, 255, 255, 255], 		// White text
+        
+        // Text rendering settings for clarity and performance.
+        getSize: 15,
+        fontSettings: {
+            sdf: true // Use Signed Distance Field textures for robustness
+        },
+        characterSet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,:()[]- \n\u25b6', 
+        
+        getPixelOffset: [0, -10], // Offset to appear slightly above the line
+        getAlignmentBaseline: 'center',
+        getTextAnchor: 'middle',
+        padding: [4, 6], 
+        
+        // Use the same filtering logic as the aggregatedConnectionsLayer
+        getFilterValue: (d: any) => {
+            const anyConnTypeActive = d._connTypes.some((type: string) => activeTypes.has(type));
+            const sourcePinTypeVisible = activePointTypes.has(d._sourcePinType);
+            const targetPinTypeVisible = activePointTypes.has(d._targetPinType);
+            return (anyConnTypeActive && (!hideHubConnections || !d._isHub1) && (!hideHub2Connections || !d._isHub2) && sourcePinTypeVisible && targetPinTypeVisible) ? 1 : 0;
+        },
+        filterRange: [1, 1],
+        extensions: [dataFilterExt],
+        updateTriggers: { getFilterValue: filterKey() },
+        
+        // Ensure aggregated connection labels are drawn on top of other layers.
+        getZLevel: 3, // Higher Z-level than regular connection labels
+        parameters: {
+            depthTest: false, // Disables depth culling so the TextLayer is always visible
+            depthMask: false
+        }
+    });
+
     // Layer for persistent on-map connection labels.
     const connectionTextLayer = new TextLayer({
         id: 'connection-labels',
@@ -634,7 +692,7 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         }
     });
 
-    return [connectionsLayer, aggregatedConnectionsLayer, connectionTextLayer, pinsLayer, pinTextLayer];
+    return [connectionsLayer, aggregatedConnectionsLayer, connectionTextLayer, aggregatedConnectionTextLayer, pinsLayer, pinTextLayer];
 }
 
 // ---------------------- UI: Legend and Controls ----------------------
@@ -671,16 +729,15 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
     ];
 
     const controlsContainer = document.createElement('div');
-    controlsContainer.innerHTML = ``;
+    controlsContainer.innerHTML = `<button id="filters-toggle" title="Show/Hide filters" style="position: absolute; z-index: 10; top: 60px; left: 220px; padding:8px 10px; border:1px solid #ccc; border-radius:8px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.15); font: 13px system-ui, sans-serif; cursor:pointer;">Filters</button>`;
     document.body.appendChild(controlsContainer);
 
     const controlsAndButtonContainer = document.createElement('div');
     controlsAndButtonContainer.innerHTML = `
-        <button id="filters-toggle" title="Show/Hide filters" style="position: absolute; z-index: 10; top: 60px; left: 220px; padding:8px 10px; border:1px solid #ccc; border-radius:8px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.15); font: 13px system-ui, sans-serif; cursor:pointer;">Filters</button>
         <div id="controls-container" style="position:absolute; z-index:5; top:60px; left:10px; font: 13px system-ui, sans-serif; display:flex; flex-direction:column; gap:10px; max-width: 200px;">
             
             <div id="connection-legend-box" class="legend-box">
-                <h2 style="font-size:16px; margin:0;">Connections</h2>
+                <div class="legend-header"><h2 style="font-size:16px; margin:0;">Connections</h2><button class="toggle-btn" data-target="connection-legend-box">-</button></div>
                 <div id="conn-button-section" class="button-section">
                     <button id="all-conn-btn">All / None</button>
                     </div>
@@ -701,7 +758,7 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
                 </label>
             </div>
             <div class="legend-box">
-                <h2 style="font-size:16px; margin:0;">Pins</h2>
+                <div class="legend-header"><h2 style="font-size:16px; margin:0;">Pins</h2><button class="toggle-btn" data-target="pins-legend-box">-</button></div>
                 <div class="button-section">
                     <button id="all-pins-btn">All / None</button>
                     <button id="tooltip-btn">${showPinLabels ? 'Hide Labels' : 'Show Labels'}</button>
@@ -719,6 +776,9 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
             </div>
         <style>
             .legend-box { background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,.15); padding:8px 10px; display:flex; flex-direction:column; gap:10px; }
+            .legend-header { display: flex; justify-content: space-between; align-items: center; }
+            .toggle-btn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 0 5px; line-height: 1; }
+            .legend-box.minimized > *:not(.legend-header) { display: none; }
             .legend-box label { display:flex; align-items:center; gap:6px; }
             .button-section { 
                 display:flex; 
@@ -766,6 +826,10 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         if (container) toggleDisplay(container);
     });
     
+    // Add IDs to the legend boxes for targeting
+    document.querySelector('.legend-box:nth-of-type(2)')?.setAttribute('id', 'pins-legend-box');
+
+
     // Function to handle map layer update
     const updateMap = () => {
         onChange(); 
@@ -831,6 +895,18 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
             const key = cb.dataset.key as PointType;
             if (cb.checked) activePointTypes.add(key); else activePointTypes.delete(key);
             updateMap();
+        });
+    });
+
+    // Event listeners for the new minimize/maximize toggle buttons
+    document.querySelectorAll<HTMLButtonElement>('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.dataset.target;
+            const legendBox = document.getElementById(targetId!);
+            if (legendBox) {
+                legendBox.classList.toggle('minimized');
+                btn.textContent = legendBox.classList.contains('minimized') ? '+' : '-';
+            }
         });
     });
 }

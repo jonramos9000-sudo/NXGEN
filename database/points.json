@@ -223,6 +223,11 @@
     },
     {
       "type": "Feature",
+      "properties": { "name": "HUB2" },
+      "geometry": { "type": "Point", "coordinates": [9.077213, 48.734127] }
+    },
+    {
+      "type": "Feature",
       "properties": { "name": "MLST" },
       "geometry": { "type": "Point", "coordinates": [-124.153609, 40.7623] }
     },

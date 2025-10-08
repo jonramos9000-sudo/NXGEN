@@ -239,6 +239,7 @@ const PinLogic = {
     PIN_LOOKUP_MAP: {
         // VIOLET_GROUP
         "sb": "VIOLET_GROUP",
+        "Ship" : "VIOLET_GROUP",
 
         // YELLOW_GROUP
         "Point 13": "YELLOW_GROUP",

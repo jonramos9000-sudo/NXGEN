@@ -687,7 +687,7 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
             url: d.iconUrl,
             width: 24,
             height: 24,
-            anchorY: 24,
+            anchorY: 12,
         }),
         getPosition: (d: any) => d.geometry.coordinates,
         sizeScale: 1,

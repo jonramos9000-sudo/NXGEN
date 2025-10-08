@@ -484,5 +484,6 @@
   { "from": "bg", "to": "Oklahoma City", "Connection_type": "SL" },
   { "from": "Point 14", "to": "Oklahoma City", "Connection_type": "SL" },
   { "from": "Point 2", "to": "Oklahoma City", "Connection_type": "SL" },
-  { "from": "NE", "to": "Ohio Pin", "Connection_type": "TR" }
+  { "from": "NE", "to": "Ohio Pin", "Connection_type": "TR" },
+  { "from": "LRT3", "to": "Point 3", "Connection_type": "HF" }
 ]

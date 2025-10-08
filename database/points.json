@@ -280,6 +280,11 @@
       "type": "Feature",
       "properties": { "name": "NAOC" },
       "geometry": { "type": "Point", "coordinates": [-95.13952, 46.254161] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "LRT3", "tech": "PR-16" },
+      "geometry": { "type": "Point", "coordinates": [-75.133792, 44.298151] }
     }
   ]
 }

@@ -97,7 +97,7 @@ type Feature = GeoJSON.Feature<GeoJSON.Geometry, Properties>;
 type Data = GeoJSON.FeatureCollection<GeoJSON.Geometry, Properties> | any[];
 
 // Data sources
-const CONNECTIONS_DATA_URL: string = "database/connections_geojson_like.json";
+const CONNECTIONS_DATA_URL: string = "database/connections.json";
 const POINTS_DATA_URL: string = "database/points.json";
 
 let processedConnections: any[] = [];

@@ -100,6 +100,7 @@ const POINTS_DATA_URL: string = "database/points.json";
 
 let processedConnections: any[] = [];
 let processedPins: any[] = [];
+let aggregatedConnections: any[] = []; // New array for aggregated connections
 
 // ---------------------- Helper Functions ----------------------
 
@@ -320,7 +321,7 @@ function getHeightByType(d: any): number {
 
 /**
  * Get source coordinates for a connection feature.
- */
+ */ 
 function getSourcePos(d: any): [number, number] {
     const src = d._sourcePos ?? getProp(d, "from")?.geometry?.coordinates ?? getProp(d, "coordinates")?.[0];
     return src as [number, number];
@@ -375,6 +376,23 @@ function getLabelMidpoint(d: any): [number, number] {
     return [lng, lat];
 }
 
+/**
+ * Get RGBA color for an aggregated connection based on the count of unique connection types.
+ */
+function getAggregatedColor(d: any): [number, number, number, number] {
+    const count = d?._connTypes?.length ?? 0;
+    if (count >= 5) {
+        return [255, 0, 0, 200]; // Red for 5+ types
+    }
+    if (count >= 3) {
+        return [255, 165, 0, 200]; // Orange for 3-4 types
+    }
+    if (count >= 2) {
+        return [255, 255, 0, 200]; // Yellow for 2 types
+    }
+    return [200, 200, 200, 150]; // Default: Light grey for 1 type
+}
+
 // ---------------------- Filtering (GPU) ----------------------
 
 // Coordinates for specific locations used in filtering.
@@ -386,6 +404,8 @@ let hideHubConnections = false;
 const HUB2_LNG = 9.077841; // EU
 const HUB2_LAT = 48.734481;
 let hideHub2Connections = false;
+
+let showAggregatedConnections = false; // New state for toggling aggregated layer
 
 
 /** State for the demonstration sequence. */
@@ -435,7 +455,8 @@ function filterKey() {
         Array.from(activeTypes).sort().join(","),
         `hub1:${hideHubConnections ? 1 : 0}`,
         `hub2:${hideHub2Connections ? 1 : 0}`,
-        Array.from(activePointTypes).sort().join(",")
+        Array.from(activePointTypes).sort().join(","),
+        `aggregated:${showAggregatedConnections ? 1 : 0}` // Add aggregated connections state
     ].join("|") + `|connLabels:${showConnectionLabels ? 1 : 0}` + 
       `|pinLabels:${showPinLabels ? 1 : 0}`;
 }
@@ -466,7 +487,8 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
     // Layer for the main connection lines (arcs).
     const connectionsLayer = new ArcLayer({
         id: "flights",
-        data: connectionsData,
+        // Hide this layer when aggregated connections are shown
+        data: showAggregatedConnections ? [] : connectionsData,
         getSourcePosition: (d: any) => getSourcePos(d),
         getTargetPosition: (d: any) => getTargetPos(d),
         getSourceColor: colorByTypeRGBA,
@@ -481,11 +503,36 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         updateTriggers: { getFilterValue: filterKey() }
     });
 
+    // New layer for aggregated connections, showing thickness based on count
+    const aggregatedConnectionsLayer = new ArcLayer({
+        id: "aggregated-connections",
+        data: showAggregatedConnections ? aggregatedConnections : [], // Use the new data source
+        getSourcePosition: (d: any) => d._sourcePos,
+        getTargetPosition: (d: any) => d._targetPos,
+        getSourceColor: getAggregatedColor,
+        getTargetColor: getAggregatedColor,
+        // Thickness scales with the number of aggregated connections
+        getWidth: (d: any) => d._count * 2, // Adjust multiplier for desired thickness
+        getHeight: (d: any) => 0.5, // Use a consistent height for aggregated arcs
+        pickable: true,
+        greatCircle: true,
+        // Filter based on whether *any* of the constituent types are active
+        getFilterValue: (d: any) => {
+            const anyConnTypeActive = d._connTypes.some((type: string) => activeTypes.has(type));
+            const sourcePinTypeVisible = activePointTypes.has(d._sourcePinType);
+            const targetPinTypeVisible = activePointTypes.has(d._targetPinType);
+            return (anyConnTypeActive && (!hideHubConnections || !d._isHub1) && (!hideHub2Connections || !d._isHub2) && sourcePinTypeVisible && targetPinTypeVisible) ? 1 : 0;
+        },
+        filterRange: [1, 1],
+        extensions: [dataFilterExt],
+        updateTriggers: { getFilterValue: filterKey() }
+    });
+
     // Layer for persistent on-map connection labels.
     const connectionTextLayer = new TextLayer({
         id: 'connection-labels',
-        // Only display connections if showConnectionLabels is true
-        data: showConnectionLabels ? connectionsData : [],
+        // Only display labels if showConnectionLabels is true AND aggregated view is off
+        data: showConnectionLabels && !showAggregatedConnections ? connectionsData : [],
         pickable: false,
         // Position label at the midpoint of the connection's chord
         getPosition: getLabelMidpoint,
@@ -587,7 +634,7 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         }
     });
 
-    return [connectionsLayer, connectionTextLayer, pinsLayer, pinTextLayer];
+    return [connectionsLayer, aggregatedConnectionsLayer, connectionTextLayer, pinsLayer, pinTextLayer];
 }
 
 // ---------------------- UI: Legend and Controls ----------------------
@@ -648,6 +695,10 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
                         ${label}
                     </label>
                 `).join('')}
+                <label>
+                    <input type="checkbox" id="show-aggregated-cb" ${showAggregatedConnections ? 'checked' : ''}>
+                    Aggregate Connections
+                </label>
             </div>
             <div class="legend-box">
                 <h2 style="font-size:16px; margin:0;">Pins</h2>
@@ -761,6 +812,12 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         document.querySelectorAll<HTMLInputElement>('.pin-cb').forEach(cb => cb.checked = !isAllActive);
         updateMap();
     });
+
+    document.getElementById('show-aggregated-cb')?.addEventListener('change', (e) => {
+        showAggregatedConnections = (e.target as HTMLInputElement).checked;
+        updateMap();
+    });
+
 
     // Logic for the "Show Labels" button to toggle the persistent TextLayer for PINS
     document.getElementById('tooltip-btn')?.addEventListener('click', (e) => {
@@ -909,6 +966,52 @@ async function preprocessData() {
         // All points are now treated as pins
         return p;
     });
+
+    // Aggregate connections for the new layer
+    const aggregatedConnectionsMap = new Map<string, {
+        from: Feature | undefined;
+        to: Feature | undefined;
+        _sourcePos: [number, number];
+        _targetPos: [number, number];
+        _connTypes: Set<string>;
+        _count: number;
+        _sourcePinType: PointType;
+        _targetPinType: PointType;
+        _isHub1: boolean;
+        _isHub2: boolean;
+    }>();
+
+    processedConnections.forEach(conn => {
+        // Create a canonical key for each from/to pair of coordinates,
+        // regardless of direction, by sorting them before creating the key.
+        const pos1Str = conn._sourcePos.join(',');
+        const pos2Str = conn._targetPos.join(',');
+        const key = [pos1Str, pos2Str].sort().join('|');
+        if (!aggregatedConnectionsMap.has(key)) {
+            aggregatedConnectionsMap.set(key, {
+                from: conn.from,
+                to: conn.to,
+                _sourcePos: conn._sourcePos,
+                _targetPos: conn._targetPos,
+                _connTypes: new Set<string>(),
+                _count: 0,
+                _sourcePinType: conn._sourcePinType,
+                _targetPinType: conn._targetPinType,
+                _isHub1: false, // Will be OR-ed
+                _isHub2: false  // Will be OR-ed
+            });
+        }
+        const aggregated = aggregatedConnectionsMap.get(key)!;
+        aggregated._connTypes.add(conn._connType);
+        aggregated._count++;
+        aggregated._isHub1 = aggregated._isHub1 || conn._isHub1;
+        aggregated._isHub2 = aggregated._isHub2 || conn._isHub2;
+    });
+
+    aggregatedConnections = Array.from(aggregatedConnectionsMap.values()).map(agg => ({
+        ...agg,
+        _connTypes: Array.from(agg._connTypes) // Convert Set to Array for easier use
+    }));
 
     // Detect overlapping pins and assign label offsets
     const pinsByLocation = new Map<string, any[]>();
@@ -1181,6 +1284,26 @@ async function initMap(): Promise<void> {
                 };
             }
             
+            // Tooltip for aggregated connections
+            if (layer?.id === "aggregated-connections") {
+                const fromName = object?.from?.properties?.name ?? "Unknown Start";
+                const toName = object?.to?.properties?.name ?? "Unknown End";
+                const fromTech = object?.from?.properties?.tech;
+                const toTech = object?.to?.properties?.tech;
+                const connTypes = object?._connTypes?.join(', ') ?? "N/A";
+                const count = object?._count ?? 0;
+                const fromString = `"${fromName}"${fromTech ? ` (${fromTech})` : ''}`;
+                const toString = `"${toName}"${toTech ? ` (${toTech})` : ''}`;
+                return {
+                    html: `
+                        <div style="font-family:system-ui; font-size:12px; line-height:1.35; color:white">
+                            <div><b>${fromString} &rarr; ${toString}</b></div>
+                            <div style="margin-top:4px;">Types (${count}): ${connTypes || 'N/A'}</div>
+                        </div>
+                    `
+                };
+            }
+
             // Tooltip for connections.
             const fromObj = object?.from;
             const toObj 	= object?.to;

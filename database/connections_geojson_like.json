@@ -321,17 +321,18 @@
   },
   {
     "from": "sb",
-    "to": "E62",
+    "to": "E6-2",
     "Connection_type": "HF"
   },
    {
     "from": "LRT1",
-    "to": "E61",
-    "Connection_type": "HF"
+    "to": "E6-1",
+    "Connection_type": "HF",
+    "IER": ["Location", "Logistics"]
   },
   {
     "from": "LRT1",
-    "to": "E61",
+    "to": "E6-1",
     "Connection_type": "HF L"
   },
   {
@@ -360,9 +361,10 @@
     "Connection_type": "SATCOM"
   },
   {
-    "from": "E61",
-    "to": "E62",
-    "Connection_type": "HF"
+    "from": "E6-1",
+    "to": "E6-2",
+    "Connection_type": "HF",
+    "IER": ["Message"]
   },
   {
     "from": "Oklahoma City",
@@ -432,9 +434,9 @@
     "from": "Ohio Pin", "to": "Point 2", "Connection_type": "TR"
   },
   { "from": "FOB1", "to": "Point 12", "Connection_type": "TR" },
-  { "from": "E61", "to": "Hub1", "Connection_type": "HF" },
+  { "from": "E6-1", "to": "Hub1", "Connection_type": "HF", "IER": ["Logistics", "NRP", "SIT"]},
   { "from": "Hub1", "to": "Hub2", "Connection_type": "HF" },
-  { "from": "LRT2", "to": "HUB-122", "Connection_type": "HF" },
+  { "from": "LRT2", "to": "HUB-122", "Connection_type": "HF", "IER": ["Location"]},
   { "from": "MLST", "to": "Hub1", "Connection_type": "SAT" },
   { "from": "MLST", "to": "sb", "Connection_type": "SAT" },
   { "from": "LRT1", "to": "Hub1", "Connection_type": "U L" },
@@ -485,5 +487,7 @@
   { "from": "Point 14", "to": "Oklahoma City", "Connection_type": "SL" },
   { "from": "Point 2", "to": "Oklahoma City", "Connection_type": "SL" },
   { "from": "NE", "to": "Ohio Pin", "Connection_type": "TR" },
-  { "from": "LRT3", "to": "Point 3", "Connection_type": "HF" }
+  { "from": "LRT3", "to": "Point 3", "Connection_type": "HF" },
+  { "from": "E6-5", "to": "LRT2", "Connection_type": "HF", "IER":["Logistics"] },
+  { "from": "Ship", "to": "E6-2", "Connection_type": "HF" }
 ]

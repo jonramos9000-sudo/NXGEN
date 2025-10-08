@@ -125,6 +125,17 @@ function getConnType(d: any): string {
 }
 
 /**
+ * Get the IER property of a connection and return it as an uppercased string array.
+ */
+function getIERArray(d: any): string[] {
+    const ierValue = getProp(d, "IER");
+    if (Array.isArray(ierValue)) {
+        return ierValue.map(item => String(item ?? '').toUpperCase());
+    }
+    return [];
+}
+
+/**
  * Retrieve the name property from a feature.
  */
 function getPointName(d: any): string {
@@ -289,6 +300,7 @@ const PinLogic = {
         // MAGENTA_GROUP HFGCS
         "H_AK": "MAGENTA_GROUP",
         "Beale HFCGS": "MAGENTA_GROUP",
+        "E": "MAGENTA_GROUP",
 
         "LRT1": "GREY_GROUP",
         "LRT2": "GREY_GROUP",
@@ -301,6 +313,7 @@ const PinLogic = {
 
 let activePointTypes = new Set<PointType>();
 let activeTypes = new Set<string>();
+let activeIerTypes = new Set<string>();
 
 /**
  * Determine pin type (group) from a feature.
@@ -769,6 +782,14 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         { key: "GREY_GROUP", label: "Grey", color: "rgb(169, 169, 169)" },
     ];
 
+    const ierItems: { key: string; label: string }[] = [
+        { key: "LOCATION", label: "Location" },
+        { key: "LOGISTICS", label: "Logistics" },
+        { key: "NRP", label: "NRP" },
+        { key: "SIT", label: "SIT" },
+        { key: "MESSAGE", label: "Message" },
+        { key: "DEFAULT", label: "Default" },
+    ];
     const controlsContainer = document.createElement('div');
     controlsContainer.innerHTML = `<button id="filters-toggle" title="Show/Hide filters" style="position: absolute; z-index: 10; top: 60px; left: 220px; padding:8px 10px; border:1px solid #ccc; border-radius:8px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.15); font: 13px system-ui, sans-serif; cursor:pointer;">Filters</button>`;
     document.body.appendChild(controlsContainer);
@@ -777,7 +798,7 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
     controlsAndButtonContainer.innerHTML = `
         <div id="controls-container" style="position:absolute; z-index:5; top:60px; left:10px; font: 13px system-ui, sans-serif; display:flex; flex-direction:column; gap:10px; max-width: 200px;">
             
-            <div class="legend-box">
+            <div id="connection-legend-box" class="legend-box">
                 <div class="legend-header"><h2 style="font-size:16px; margin:0;">Connections</h2><button class="toggle-btn" data-target="connection-legend-box">-</button></div>
                 <div id="conn-button-section" class="button-section">
                     <button id="all-conn-btn">All / None</button>
@@ -798,6 +819,19 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
                     Aggregate Connections
                 </label>
             </div>
+            <div id="ier-legend-box" class="legend-box">
+                <div class="legend-header"><h2 style="font-size:16px; margin:0;">IER Type</h2><button class="toggle-btn" data-target="ier-legend-box">-</button></div>
+                <div id="ier-button-section" class="button-section">
+                    <button id="all-ier-btn">All / None</button>
+                </div>
+                ${ierItems.map(({ key, label }) => `
+                    <label>
+                        <input type="checkbox" class="ier-cb" data-key="${key}" ${activeIerTypes.has(key) ? 'checked' : ''}>
+                        ${label}
+                    </label>
+                `).join('')}
+            </div>
+
             <div class="legend-box">
                 <div class="legend-header"><h2 style="font-size:16px; margin:0;">Pins</h2><button class="toggle-btn" data-target="pins-legend-box">-</button></div>
                 <div class="button-section">
@@ -1469,12 +1503,16 @@ async function initMap(): Promise<void> {
             const connType = getConnType(object);
             const fromTech = fromObj?.properties?.tech;
             const toTech = toObj?.properties?.tech;
+            const ierArray = getIERArray(object);
+            const ierHtml = ierArray.length > 0 ? `<div style="margin-top:4px;">IER: ${ierArray.join(', ')}</div>` : '';
+
             return {
                 html: `
                     <div style="font-family:system-ui; font-size:12px; line-height:1.35; color: white">
                         <div>From: "${fromName}" (${fromTech ?? 'N/A'})</div>
                         <div>To: "${toName}" (${toTech ?? 'N/A'})</div>
                         <div style="margin-top:4px;">Type: ${connType}</div>
+                        ${ierHtml}
                     </div>
                 `
             };

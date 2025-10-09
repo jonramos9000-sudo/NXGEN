@@ -201,7 +201,7 @@ type PointType =
     | "PINK_GROUP"
     | "WHITE_GROUP"
     | "OKC_GROUP"
-    | "MAGENTA_GROUP" | "GREY_GROUP";
+    | "MAGENTA_GROUP" | "GREY_GROUP" | "PEACH_GROUP";
 
 /**
  * Encapsulates pin group logic for mapping pin names to colors and types.
@@ -210,7 +210,7 @@ const PinLogic = {
     ALL_POINT_TYPES: [
         "RED_GROUP", "TURQUOISE_GROUP", "YELLOW_GROUP", "GREEN_GROUP",
         "PURPLE_GROUP", "ORANGE_GROUP", "BLUE_GROUP", "VIOLET_GROUP",
-        "PINK_GROUP", "WHITE_GROUP", "MAGENTA_GROUP", "OKC_GROUP", "GREY_GROUP",
+        "PINK_GROUP", "WHITE_GROUP", "MAGENTA_GROUP", "OKC_GROUP", "GREY_GROUP", "PEACH_GROUP",
     ] as PointType[],
 
     // RGBA color map for each pin group
@@ -228,6 +228,7 @@ const PinLogic = {
         MAGENTA_GROUP: [255, 0, 255, 255],
         GREY_GROUP: [169, 169, 169, 220],
         OKC_GROUP: [0, 255, 255, 220],
+        PEACH_GROUP: [255, 143, 180, 220]
     } as Record<PointType, [number, number, number, number]>,
 
     // Pin name to group mapping
@@ -300,7 +301,7 @@ const PinLogic = {
         "H_AK": "MAGENTA_GROUP",
         "Beale HFCGS": "MAGENTA_GROUP",
         "E": "MAGENTA_GROUP",
-        "CC": "MAGENTA_GROUP",
+        "Point 6": "MAGENTA_GROUP",
         "Grand Forks": "MAGENTA_GROUP",
         "Wahiawa": "MAGENTA_GROUP",
 
@@ -308,7 +309,9 @@ const PinLogic = {
         "LRT2": "GREY_GROUP",
         "LRT3" : "GREY_GROUP",
 
-        "MOB": "OKC_GROUP"
+        "MOB": "OKC_GROUP",
+
+        "NAOC" : "PEACH_GROUP"
 
     } as Record<string, PointType>,
 };
@@ -832,10 +835,11 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         { key: "PURPLE_GROUP", label: "Purple", color: "rgb(128, 0, 128)" },
         { key: "ORANGE_GROUP", label: "Orange", color: "rgb(255, 165, 0)" },
         { key: "BLUE_GROUP", label: "Blue", color: "rgb(0, 120, 255)" },
-        { key: "WHITE_GROUP", label: "White", color: "rgb(197, 110, 255)" },
+        { key: "WHITE_GROUP", label: "Lilac", color: "rgb(197, 110, 255)" },
         { key: "OKC_GROUP", label: "Cyan", color: "rgb(0, 255, 255)" },
         { key: "MAGENTA_GROUP", label: "Magenta", color: "rgb(255, 0, 255)" },
-        { key: "GREY_GROUP", label: "Grey", color: "rgb(169, 169, 169)" }
+        { key: "GREY_GROUP", label: "Grey", color: "rgb(169, 169, 169)" },
+        { key: "PEACH_GROUP", label: "Peach", color: "rgb(255, 143, 127)"}
     ];
 
     const ierItems: { key: string; label: string }[] = [

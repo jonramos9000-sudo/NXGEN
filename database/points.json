@@ -213,12 +213,12 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "HUB-122" },
+      "properties": { "name": "Hub-W3" },
       "geometry": { "type": "Point", "coordinates": [-118.886914, 36.835072] }
     },
     {
       "type": "Feature",
-      "properties": { "name": "Hub2" },
+      "properties": { "name": "Hub-W2" },
       "geometry": { "type": "Point", "coordinates": [-115.320093, 39.330707] }
     },
     {

@@ -305,12 +305,12 @@
     "Connection_type": "HF"
   },
   {
-    "from": "Hub1",
+    "from": "Hub-W1",
     "to": "LRT1",
     "Connection_type": "HF"
   },
   {
-    "from": "HUB-122",
+    "from": "Hub-W3",
     "to": "LRT",
     "Connection_type": "HF"
   },
@@ -352,7 +352,7 @@
   },
   {
     "from": "MLST",
-    "to": "Hub1",
+    "to": "Hub-W1",
     "Connection_type": "HF"
   },
   {
@@ -378,33 +378,33 @@
   },
   {
     "from": "FOB1",
-    "to": "HUB-122",
+    "to": "Hub-W3",
     "Connection_type": "N"
   },
   {
     "from": "FOB1",
-    "to": "HUB-122",
+    "to": "Hub-W3",
     "Connection_type": "TR"
   },
   {
     "from": "Ohio Pin",
-    "to": "HUB-122",
+    "to": "Hub-W3",
     "Connection_type": "TR"
   },
   { "from": "FOB1", "to": "Point 9", "Connection_type": "TR1" },
   { "from": "FOB1", "to": "Point 12", "Connection_type": "TR" },
   {
     "from": "FOB1",
-    "to": "Hub1",
+    "to": "Hub-W1",
     "Connection_type": "TR"
   },
-  { "from": "FOB1", "to": "Hub2", "Connection_type": "TR" },
+  { "from": "FOB1", "to": "Hub-W2", "Connection_type": "TR" },
   { "from": "FOB1", "to": "MLST", "Connection_type": "TR" },
   {
-    "from": "FOB1", "to": "Hub1", "Connection_type": "TR"
+    "from": "FOB1", "to": "Hub-W1", "Connection_type": "TR"
   },
   {
-    "from": "FOB1", "to": "Hub2", "Connection_type": "TR"
+    "from": "FOB1", "to": "Hub-W2", "Connection_type": "TR"
   },
   {
     "from": "FOB1", "to": "MLST", "Connection_type": "TR"
@@ -434,12 +434,12 @@
     "from": "Ohio Pin", "to": "Point 2", "Connection_type": "TR"
   },
   { "from": "FOB1", "to": "Point 12", "Connection_type": "TR" },
-  { "from": "E6-1", "to": "Hub1", "Connection_type": "HF", "IER": ["Logistics", "NRP", "SIT"]},
-  { "from": "Hub1", "to": "Hub2", "Connection_type": "HF" },
-  { "from": "LRT2", "to": "HUB-122", "Connection_type": "HF", "IER": ["Location"]},
-  { "from": "MLST", "to": "Hub1", "Connection_type": "SAT" },
+  { "from": "E6-1", "to": "Hub-W1", "Connection_type": "HF", "IER": ["Logistics", "NRP", "SIT"]},
+  { "from": "Hub-W1", "to": "Hub-W2", "Connection_type": "HF" },
+  { "from": "LRT2", "to": "Hub-W3", "Connection_type": "HF", "IER": ["Location"]},
+  { "from": "MLST", "to": "Hub-W1", "Connection_type": "SAT" },
   { "from": "MLST", "to": "sb", "Connection_type": "SAT" },
-  { "from": "LRT1", "to": "Hub1", "Connection_type": "U L" },
+  { "from": "LRT1", "to": "Hub-W1", "Connection_type": "U L" },
   {
     "from": "MOB",
     "to": "Point 14",
@@ -456,17 +456,17 @@
     "Connection_type": "TR"
   },
   {
-    "from": "Hub2",
-    "to": "HUB-122",
+    "from": "Hub-W2",
+    "to": "Hub-W3",
     "Connection_type": "HF"
   },
-  { "from": "Hub1", "to": "HUB-122", "Connection_type": "HF" },
-  { "from": "Hub2", "to": "FOB1", "Connection_type": "SL" },
-  { "from": "HUB-122", "to": "FOB1", "Connection_type": "SL" },
-  { "from": "Hub1", "to": "FOB1", "Connection_type": "SL" },
-  { "from": "Hub2", "to": "NE", "Connection_type": "SL" },
-  { "from": "HUB-122", "to": "NE", "Connection_type": "SL" },
-  { "from": "Hub1", "to": "NE", "Connection_type": "SL" },
+  { "from": "Hub-W1", "to": "Hub-W3", "Connection_type": "HF" },
+  { "from": "Hub-W2", "to": "FOB1", "Connection_type": "SL" },
+  { "from": "Hub-W3", "to": "FOB1", "Connection_type": "SL" },
+  { "from": "Hub-W1", "to": "FOB1", "Connection_type": "SL" },
+  { "from": "Hub-W2", "to": "NE", "Connection_type": "SL" },
+  { "from": "Hub-W3", "to": "NE", "Connection_type": "SL" },
+  { "from": "Hub-W1", "to": "NE", "Connection_type": "SL" },
   { "from": "Hub-E1", "to": "Hub-E2", "Connection_type": "HF" },
   { "from": "Hub-E1", "to": "Hub-E3", "Connection_type": "HF" },
   { "from": "Hub-E3", "to": "Hub-E2", "Connection_type": "HF" },

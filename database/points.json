@@ -213,7 +213,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Hub1" },
+      "properties": { "name": "Hub-W1" },
       "geometry": { "type": "Point", "coordinates": [-117.686219, 42.078896] }
     },
     {

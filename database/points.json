@@ -8,8 +8,13 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Point 2" },
+      "properties": { "name": "HUB-C2" },
       "geometry": { "type": "Point", "coordinates": [-94.2203, 35.2012] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "HUB-C3" },
+      "geometry": { "type": "Point", "coordinates": [-87.732116, 43.812778] }
     },
     {
       "type": "Feature",
@@ -63,7 +68,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Point 14" },
+      "properties": { "name": "HUB-C1" },
       "geometry": { "type": "Point", "coordinates": [-95.717720, 39.506018] }
     },
     {
@@ -248,7 +253,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Ohio Pin" },
+      "properties": { "name": "FOB2" },
       "geometry": { "type": "Point", "coordinates": [-82.9988, 39.9612] }
     },
     {

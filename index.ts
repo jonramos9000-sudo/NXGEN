@@ -245,7 +245,6 @@ const PinLogic = {
         "Point 13": "YELLOW_GROUP",
         "E6-1": "YELLOW_GROUP",
         "E6-2": "YELLOW_GROUP",
-        "Point 6": "YELLOW_GROUP",
         "E6-3": "YELLOW_GROUP",
         "E6-4": "YELLOW_GROUP",
         "E6-5": "YELLOW_GROUP",
@@ -277,7 +276,6 @@ const PinLogic = {
         // PINK_GROUP
         "SAN": "PINK_GROUP",
         "SBL": "PINK_GROUP",
-        "LUL": "PINK_GROUP",
 
         // WHITE_GROUP
         "Site A": "ORANGE_GROUP",
@@ -290,18 +288,21 @@ const PinLogic = {
         "Awase": "WHITE_GROUP",
         "Harold E. Holt": "WHITE_GROUP",
         "Aguada": "WHITE_GROUP",
-        "Wahiawa": "WHITE_GROUP",
         "Naples": "WHITE_GROUP",
         "Dixon": "WHITE_GROUP",
         "Jim Creek": "WHITE_GROUP",
         "La Moure": "WHITE_GROUP",
         "Norfolk": "WHITE_GROUP",
         "Yokosuka": "WHITE_GROUP",
+        "LUL" : "WHITE_GROUP",
 
         // MAGENTA_GROUP HFGCS
         "H_AK": "MAGENTA_GROUP",
         "Beale HFCGS": "MAGENTA_GROUP",
         "E": "MAGENTA_GROUP",
+        "CC": "MAGENTA_GROUP",
+        "Grand Forks": "MAGENTA_GROUP",
+        "Wahiawa": "MAGENTA_GROUP",
 
         "LRT1": "GREY_GROUP",
         "LRT2": "GREY_GROUP",
@@ -333,8 +334,8 @@ function colorPinkByType(d: any): [number, number, number, number] {
 
 // ---------------------- Connection Styling & Labeling ----------------------
 
-type ConnType = "N" | "C" | "HF" | "RT" | "TR" | "SAT" | "HF L" | "U L" | "SL";
-const ALL_TYPES: string[] = ["N", "C", "HF", "RT", "TR", "SAT", "HF L", "U L", "SL"];
+type ConnType = "N" | "C" | "HF" | "RT" | "TR" | "SAT" | "HF L" | "U L" | "SL" | "V";
+const ALL_TYPES: string[] = ["N", "C", "HF", "RT", "TR", "SAT", "HF L", "U L", "SL" , "V"];
 
 /** Flag to control visibility of on-map connection labels. */
 let showConnectionLabels = false;
@@ -355,6 +356,7 @@ function colorByTypeRGBA(d: any): [number, number, number, number] {
         case "HF L": return [255, 255, 0, 220];
         case "U L": return [8, 232, 222, 220]; // Turquoise-like
         case "SL": return [255, 0, 127, 220]; // Hot Pink
+        case "V" : return [113, 115, 255, 220];
 
         default: return [128, 128, 128, 200]; // Default Grey
     }
@@ -538,6 +540,7 @@ function filterKey() {
  * Constructs and returns all Deck.gl layers for the map overlay.
  */
 function buildLayers(connectionsData: any[], pinsData: any[]) {
+    const isIerFilterActive = activeIerTypes.size > 0;
     /**
      * Shared filtering logic for connections. A connection is visible if:
      * 1. Its connection type is active.
@@ -547,13 +550,13 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
     const getConnectionFilterValue = (d: any) => {
         const sourcePinTypeVisible = activePointTypes.has(d._sourcePinType);
         const targetPinTypeVisible = activePointTypes.has(d._targetPinType);
-        // A connection is visible by IER if no IER filters are active, or if at least one of its IER types is active.
-        const ierVisible = activeIerTypes.size === 0 || d._ierTypes.some((ierType: string) => activeIerTypes.has(ierType));
+        // When IER filters are inactive, this part of the filter is ignored.
+        const ierVisible = !isIerFilterActive || d._ierTypes.some((ierType: string) => activeIerTypes.has(ierType));
 
         return (
             activeTypes.has(d._connType) &&
             (!hideHubConnections || !d._isHub1) &&
-            (!hideHub2Connections || !d._isHub2) && // Corrected inconsistent tabbing
+            (!hideHub2Connections || !d._isHub2) &&
             sourcePinTypeVisible && targetPinTypeVisible && ierVisible
         ) ? 1 : 0;
     };
@@ -561,8 +564,8 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
     // Layer for the main connection lines (arcs).
     const connectionsLayer = new ArcLayer({
         id: "flights",
-        // Hide this layer when aggregated connections are shown by providing empty data.
-        data: showAggregatedConnections ? [] : connectionsData,
+        // Hide this layer if IER filters are active or if aggregated view is on.
+        data: isIerFilterActive || showAggregatedConnections ? [] : connectionsData,
         getSourcePosition: (d: any) => getSourcePos(d),
         getTargetPosition: (d: any) => getTargetPos(d),
         getSourceColor: colorByTypeRGBA,
@@ -580,7 +583,8 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
     // New layer for aggregated connections, showing thickness based on count
     const aggregatedConnectionsLayer = new ArcLayer({
         id: "aggregated-connections",
-        data: showAggregatedConnections ? aggregatedConnections : [], // Use the new data source
+        // Show only if aggregated view is on AND IER filters are not active.
+        data: !isIerFilterActive && showAggregatedConnections ? aggregatedConnections : [],
         getSourcePosition: (d: any) => d._sourcePos,
         getTargetPosition: (d: any) => d._targetPos,
         getSourceColor: getAggregatedColor,
@@ -595,9 +599,37 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
             const anyConnTypeActive = d._connTypes.some((type: string) => activeTypes.has(type));
             const sourcePinTypeVisible = activePointTypes.has(d._sourcePinType);
             const targetPinTypeVisible = activePointTypes.has(d._targetPinType);
-            // An aggregated connection is visible by IER if no IER filters are active, or if at least one of its aggregated IER types is active.
-            const ierVisible = activeIerTypes.size === 0 || d._ierTypes.some((ierType: string) => activeIerTypes.has(ierType));
+            // When IER filters are inactive, this part of the filter is ignored.
+            const ierVisible = !isIerFilterActive || d._ierTypes.some((ierType: string) => activeIerTypes.has(ierType));
             return (anyConnTypeActive && (!hideHubConnections || !d._isHub1) && (!hideHub2Connections || !d._isHub2) && sourcePinTypeVisible && targetPinTypeVisible && ierVisible) ? 1 : 0;
+        },
+        filterRange: [1, 1],
+        extensions: [dataFilterExt],
+        updateTriggers: { getFilterValue: filterKey() }
+    });
+
+    // New layer specifically for IER-filtered connections.
+    const ierConnectionsLayer = new ArcLayer({
+        id: "ier-connections",
+        // Only show this layer if an IER filter is active.
+        data: isIerFilterActive ? connectionsData : [],
+        getSourcePosition: (d: any) => getSourcePos(d),
+        getTargetPosition: (d: any) => getTargetPos(d),
+        getSourceColor: colorByTypeRGBA, // Color by connection type
+        getTargetColor: colorByTypeRGBA,
+        getWidth: 2,
+        pickable: true,
+        greatCircle: true,
+        getFilterValue: (d: any) => {
+            // A connection is visible if at least one of its IER types is active.
+            const ierVisible = d._ierTypes.some((ierType: string) => activeIerTypes.has(ierType));
+            const sourcePinTypeVisible = activePointTypes.has(d._sourcePinType);
+            const targetPinTypeVisible = activePointTypes.has(d._targetPinType);
+
+            return (ierVisible &&
+                (!hideHubConnections || !d._isHub1) &&
+                (!hideHub2Connections || !d._isHub2) &&
+                sourcePinTypeVisible && targetPinTypeVisible) ? 1 : 0;
         },
         filterRange: [1, 1],
         extensions: [dataFilterExt],
@@ -607,8 +639,8 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
     // New layer for persistent on-map aggregated connection labels.
     const aggregatedConnectionTextLayer = new TextLayer({
         id: 'aggregated-connection-labels',
-        // Only display labels if showConnectionLabels is true AND aggregated view is on
-        data: showConnectionLabels && showAggregatedConnections ? aggregatedConnections : [],
+        // Only display if labels are on, aggregated view is on, AND IER filters are off.
+        data: showConnectionLabels && !isIerFilterActive && showAggregatedConnections ? aggregatedConnections : [],
         pickable: false,
         // Position label at the midpoint of the connection's chord
         getPosition: getLabelMidpoint,
@@ -648,8 +680,8 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
             const anyConnTypeActive = d._connTypes.some((type: string) => activeTypes.has(type));
             const sourcePinTypeVisible = activePointTypes.has(d._sourcePinType);
             const targetPinTypeVisible = activePointTypes.has(d._targetPinType);
-            // An aggregated connection label is visible by IER if no IER filters are active, or if at least one of its aggregated IER types is active.
-            const ierVisible = activeIerTypes.size === 0 || d._ierTypes.some((ierType: string) => activeIerTypes.has(ierType));
+            // When IER filters are inactive, this part of the filter is ignored.
+            const ierVisible = !isIerFilterActive || d._ierTypes.some((ierType: string) => activeIerTypes.has(ierType));
             return (anyConnTypeActive && (!hideHubConnections || !d._isHub1) && (!hideHub2Connections || !d._isHub2) && sourcePinTypeVisible && targetPinTypeVisible && ierVisible) ? 1 : 0;
         },
         filterRange: [1, 1],
@@ -667,8 +699,8 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
     // Layer for individual connection labels.
     const individualConnectionTextLayer = new TextLayer({
         id: 'connection-labels',
-        // Show labels only when not in aggregated view
-        data: showConnectionLabels && !showAggregatedConnections ? connectionsData : [],
+        // Show labels only if labels are on, and both aggregated and IER views are off.
+        data: showConnectionLabels && !isIerFilterActive && !showAggregatedConnections ? connectionsData : [],
         pickable: false,
         // Position label at the midpoint of the connection's chord.
         getPosition: getLabelMidpoint,
@@ -769,7 +801,7 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         }
     });
 
-    return [connectionsLayer, aggregatedConnectionsLayer, individualConnectionTextLayer, aggregatedConnectionTextLayer, pinsLayer, pinTextLayer];
+    return [connectionsLayer, aggregatedConnectionsLayer, ierConnectionsLayer, individualConnectionTextLayer, aggregatedConnectionTextLayer, pinsLayer, pinTextLayer];
 }
 
 // ---------------------- UI: Legend and Controls ----------------------
@@ -788,6 +820,7 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         { key: "HF L", label: "Yellow", color: "rgb(255, 255, 0)" },
         { key: "U L", label: "Turquoise", color: "rgb(64,224,208)" },
         { key: "SL", label: "Hot Pink", color: "rgb(255,0,127)" },
+        { key: "V", label: "Light Purple", color: "rgb(113,115,255)"}
     ];
     const pinItems: { key: PointType; label: string; color: string }[] = [
         { key: "PINK_GROUP", label: "Pink", color: "rgb(255, 105, 180)" },
@@ -802,7 +835,7 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         { key: "WHITE_GROUP", label: "White", color: "rgb(197, 110, 255)" },
         { key: "OKC_GROUP", label: "Cyan", color: "rgb(0, 255, 255)" },
         { key: "MAGENTA_GROUP", label: "Magenta", color: "rgb(255, 0, 255)" },
-        { key: "GREY_GROUP", label: "Grey", color: "rgb(169, 169, 169)" },
+        { key: "GREY_GROUP", label: "Grey", color: "rgb(169, 169, 169)" }
     ];
 
     const ierItems: { key: string; label: string }[] = [

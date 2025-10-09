@@ -505,5 +505,15 @@
   { "from": "LRT3", "to": "Hub-E1", "Connection_type": "HF" },
   { "from": "E6-5", "to": "LRT2", "Connection_type": "HF", "IER":["Logistics"] },
   { "from": "Ship", "to": "E6-2", "Connection_type": "HF" },
-  { "from": "Ship", "to": "sb", "Connection_type": "HF" }
+  { "from": "Ship", "to": "sb", "Connection_type": "HF" },
+  { "from": "Jim Creek", "to": "E6-1", "Connection_type": "V" },
+  { "from": "Jim Creek", "to": "E6-2", "Connection_type": "V" },
+  { "from": "LUL", "to": "E6-1", "Connection_type": "V" },
+  { "from": "LUL", "to": "E6-2", "Connection_type": "V" },
+  { "from": "Beale HFGCS", "to": "E6-1", "Connection_type": "HF" },
+  { "from": "Beale HFGCS", "to": "E6-2", "Connection_type": "HF" },
+  { "from": "Grand Forks", "to": "E6-1", "Connection_type": "HF" },
+  { "from": "Grand Forks", "to": "E6-2", "Connection_type": "HF" },
+  { "from": "E", "to": "E6-1", "Connection_type": "HF" },
+  { "from": "E", "to": "E6-2", "Connection_type": "HF" }
 ]

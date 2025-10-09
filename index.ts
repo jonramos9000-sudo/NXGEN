@@ -442,12 +442,26 @@ function getAggregatedColor(d: any): [number, number, number, number] {
         return [255, 0, 0, 200]; // Red for 5+ types
     }
     if (count >= 3) {
-        return [255, 165, 0, 200]; // Orange for 3-4 types
+        return [255, 165, 0, 160]; // Orange for 3-4 types
     }
     if (count >= 2) {
-        return [255, 255, 0, 200]; // Yellow for 2 types
+        return [255, 255, 0, 170]; // Yellow for 2 types
     }
     return [200, 200, 200, 150]; // Default: Light grey for 1 type
+}
+
+function getAggregatedWidth(d: any): number {
+    const count = d?._connTypes?.length ?? 0;
+    if (count == 1 ) {
+        return 2;
+    }
+    if (count == 2) {
+        return 9;
+    }
+    if (count >= 3) {
+        return 25;
+    }
+    
 }
 
 // ---------------------- Filtering (GPU) ----------------------
@@ -512,6 +526,7 @@ function filterKey() {
         `hub1:${hideHubConnections ? 1 : 0}`,
         `hub2:${hideHub2Connections ? 1 : 0}`,
         Array.from(activePointTypes).sort().join(","),
+        Array.from(activeIerTypes).sort().join(","),
         `aggregated:${showAggregatedConnections ? 1 : 0}`, // Add aggregated connections state
     ].join("|") + `|connLabels:${showConnectionLabels ? 1 : 0}` +
       `|pinLabels:${showPinLabels ? 1 : 0}`;
@@ -532,11 +547,14 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
     const getConnectionFilterValue = (d: any) => {
         const sourcePinTypeVisible = activePointTypes.has(d._sourcePinType);
         const targetPinTypeVisible = activePointTypes.has(d._targetPinType);
+        // A connection is visible by IER if no IER filters are active, or if at least one of its IER types is active.
+        const ierVisible = activeIerTypes.size === 0 || d._ierTypes.some((ierType: string) => activeIerTypes.has(ierType));
+
         return (
             activeTypes.has(d._connType) &&
             (!hideHubConnections || !d._isHub1) &&
             (!hideHub2Connections || !d._isHub2) && // Corrected inconsistent tabbing
-            sourcePinTypeVisible && targetPinTypeVisible
+            sourcePinTypeVisible && targetPinTypeVisible && ierVisible
         ) ? 1 : 0;
     };
 
@@ -568,7 +586,7 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
         getSourceColor: getAggregatedColor,
         getTargetColor: getAggregatedColor,
         // Thickness scales with the number of aggregated connections
-        getWidth: (d: any) => d._count * 2, // Adjust multiplier for desired thickness
+        getWidth: (d: any) => getAggregatedWidth(d), // Adjust multiplier for desired thickness
         getHeight: (d: any) => 0.5, // Use a consistent height for aggregated arcs
         pickable: true,
         greatCircle: true,
@@ -577,7 +595,9 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
             const anyConnTypeActive = d._connTypes.some((type: string) => activeTypes.has(type));
             const sourcePinTypeVisible = activePointTypes.has(d._sourcePinType);
             const targetPinTypeVisible = activePointTypes.has(d._targetPinType);
-            return (anyConnTypeActive && (!hideHubConnections || !d._isHub1) && (!hideHub2Connections || !d._isHub2) && sourcePinTypeVisible && targetPinTypeVisible) ? 1 : 0;
+            // An aggregated connection is visible by IER if no IER filters are active, or if at least one of its aggregated IER types is active.
+            const ierVisible = activeIerTypes.size === 0 || d._ierTypes.some((ierType: string) => activeIerTypes.has(ierType));
+            return (anyConnTypeActive && (!hideHubConnections || !d._isHub1) && (!hideHub2Connections || !d._isHub2) && sourcePinTypeVisible && targetPinTypeVisible && ierVisible) ? 1 : 0;
         },
         filterRange: [1, 1],
         extensions: [dataFilterExt],
@@ -628,7 +648,9 @@ function buildLayers(connectionsData: any[], pinsData: any[]) {
             const anyConnTypeActive = d._connTypes.some((type: string) => activeTypes.has(type));
             const sourcePinTypeVisible = activePointTypes.has(d._sourcePinType);
             const targetPinTypeVisible = activePointTypes.has(d._targetPinType);
-            return (anyConnTypeActive && (!hideHubConnections || !d._isHub1) && (!hideHub2Connections || !d._isHub2) && sourcePinTypeVisible && targetPinTypeVisible) ? 1 : 0;
+            // An aggregated connection label is visible by IER if no IER filters are active, or if at least one of its aggregated IER types is active.
+            const ierVisible = activeIerTypes.size === 0 || d._ierTypes.some((ierType: string) => activeIerTypes.has(ierType));
+            return (anyConnTypeActive && (!hideHubConnections || !d._isHub1) && (!hideHub2Connections || !d._isHub2) && sourcePinTypeVisible && targetPinTypeVisible && ierVisible) ? 1 : 0;
         },
         filterRange: [1, 1],
         extensions: [dataFilterExt],
@@ -952,6 +974,22 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         updateMap();
     });
 
+    document.getElementById('all-ier-btn')?.addEventListener('click', () => {
+        const isAllActive = activeIerTypes.size === ierItems.length;
+        activeIerTypes.clear();
+        if (!isAllActive) ierItems.forEach(item => activeIerTypes.add(item.key));
+        document.querySelectorAll<HTMLInputElement>('.ier-cb').forEach(cb => cb.checked = !isAllActive);
+        updateMap();
+    });
+
+    document.querySelectorAll<HTMLInputElement>('.ier-cb').forEach(cb => {
+        cb.addEventListener('change', () => {
+            const key = cb.dataset.key as string;
+            if (cb.checked) activeIerTypes.add(key); else activeIerTypes.delete(key);
+            updateMap();
+        });
+    });
+
     document.getElementById('show-aggregated-cb')?.addEventListener('change', (e) => {
         showAggregatedConnections = (e.target as HTMLInputElement).checked;
         updateMap();
@@ -1101,6 +1139,7 @@ async function preprocessData() {
                 _sourcePos: fromPoint?.geometry?.type === 'Point' ? (fromPoint.geometry as GeoJSON.Point).coordinates : undefined,
                 _targetPos: toPoint?.geometry?.type === 'Point' ? (toPoint.geometry as GeoJSON.Point).coordinates : undefined,
                 _connType: getConnType(c),
+                _ierTypes: getIERArray(c), // Pre-calculate IER types for filtering
                 _sourcePinType: sourcePinType,
                 _targetPinType: targetPinType,
                 _isHub1: connectsToHub({ _sourcePos: (fromPoint?.geometry as GeoJSON.Point)?.coordinates, _targetPos: (toPoint?.geometry as GeoJSON.Point)?.coordinates }),
@@ -1148,6 +1187,7 @@ async function preprocessData() {
         _sourcePos: [number, number];
         _targetPos: [number, number];
         _connTypes: Set<string>;
+        _ierTypes: Set<string>; // Add aggregated IER types
         _count: number;
         _sourcePinType: PointType;
         _targetPinType: PointType;
@@ -1168,15 +1208,17 @@ async function preprocessData() {
                 _sourcePos: conn._sourcePos,
                 _targetPos: conn._targetPos,
                 _connTypes: new Set<string>(),
+                _ierTypes: new Set<string>(), // Initialize IER types set
                 _count: 0,
-                _sourcePinType: conn._sourcePinType,
-                _targetPinType: conn._targetPinType,
+                _sourcePinType: conn._sourcePinType, // Corrected from conn.sourcePinType
+                _targetPinType: conn._targetPinType, // Corrected from conn.targetPinType
                 _isHub1: false, // Will be OR-ed
                 _isHub2: false  // Will be OR-ed
             });
         }
         const aggregated = aggregatedConnectionsMap.get(key)!;
         aggregated._connTypes.add(conn._connType);
+        conn._ierTypes.forEach((ier: string) => aggregated._ierTypes.add(ier)); // Aggregate IER types
         aggregated._count++;
         aggregated._isHub1 = aggregated._isHub1 || conn._isHub1;
         aggregated._isHub2 = aggregated._isHub2 || conn._isHub2;
@@ -1184,7 +1226,8 @@ async function preprocessData() {
 
     aggregatedConnections = Array.from(aggregatedConnectionsMap.values()).map(agg => ({
         ...agg,
-        _connTypes: Array.from(agg._connTypes) // Convert Set to Array for easier use
+        _connTypes: Array.from(agg._connTypes), // Convert Set to Array for easier use
+        _ierTypes: Array.from(agg._ierTypes) // Convert IER Set to Array
     }));
 
     // --- Assign label offsets for overlapping pins ---
@@ -1272,6 +1315,7 @@ async function initMap(): Promise<void> {
     // Initialize with all filters off by default.
     activeTypes = new Set();
     activePointTypes = new Set();
+    activeIerTypes = new Set(); // Initialize IER filter set
 
     // Create and display the "Fly from OKC to HUB" button on load
     const flyToButton = document.createElement('button');

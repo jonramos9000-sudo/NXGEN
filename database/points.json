@@ -13,12 +13,12 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Point 3" },
+      "properties": { "name": "Hub-E1" },
       "geometry": { "type": "Point", "coordinates": [-73.1462, 44.4773] }
     },
     {
       "type": "Feature",
-      "properties": { "name": "Point 4" },
+      "properties": { "name": "Hub-E3" },
       "geometry": { "type": "Point", "coordinates": [-82.547014, 30.332469] }
     },
     {
@@ -53,7 +53,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Point 11" },
+      "properties": { "name": "Hub-E2" },
       "geometry": { "type": "Point", "coordinates": [-76.44905, 38.28625] }
     },
     {

@@ -24,7 +24,7 @@
     {
       "type": "Feature",
       "properties": { "name": "E6-1", "icon": "airplane", "tech": "PR-16" },
-      "geometry": { "type": "Point", "coordinates": [ -127.807819, 43.699965] }
+      "geometry": { "type": "Point", "coordinates": [ -123.872517, 41.669704] }
     },
     {
       "type": "Feature",
@@ -79,7 +79,7 @@
     {
       "type": "Feature",
       "properties": { "name": "sb", "icon": "boat" },
-      "geometry": { "type": "Point", "coordinates": [-131.808665, 40.665136] }
+      "geometry": { "type": "Point", "coordinates": [-130.201351, 40.179091] }
     },
     {
       "type": "Feature",
@@ -229,12 +229,12 @@
     {
       "type": "Feature",
       "properties": { "name": "MLST" },
-      "geometry": { "type": "Point", "coordinates": [-124.153609, 40.7623] }
+      "geometry": { "type": "Point", "coordinates": [-123.287582, 39.339765] }
     },
     {
       "type": "Feature",
       "properties": { "name": "E6-2", "icon": "airplane" },
-      "geometry": { "type": "Point", "coordinates": [-129.970953, 45.819748] }
+      "geometry": { "type": "Point", "coordinates": [ -128.088381, 44.051876] }
     },
     {
       "type": "Feature",
@@ -294,7 +294,7 @@
     {
       "type": "Feature",
       "properties": { "name": "Ship"},
-      "geometry": { "type": "Point", "coordinates": [ -128.506734, 39.253443] }
+      "geometry": { "type": "Point", "coordinates": [-132.566765, 43.810408] }
     }
   ]
 }

@@ -234,7 +234,7 @@
     {
       "type": "Feature",
       "properties": { "name": "MLST" },
-      "geometry": { "type": "Point", "coordinates": [-123.287582, 39.339765] }
+      "geometry": { "type": "Point", "coordinates": [-123.708906, 39.338853] }
     },
     {
       "type": "Feature",

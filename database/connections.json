@@ -338,17 +338,12 @@
   {
     "from": "MLST",
     "to": "sb",
-    "Connection_type": "SATCOM"
-  },
-  {
-    "from": "MLST",
-    "to": "sb",
     "Connection_type": "HF"
   },
   {
     "from": "MLST",
     "to": "Hub",
-    "Connection_type": "SATCOM"
+    "Connection_type": "SAT"
   },
   {
     "from": "MLST",
@@ -358,7 +353,7 @@
   {
     "from": "sb",
     "to": "Hub",
-    "Connection_type": "SATCOM"
+    "Connection_type": "SAT"
   },
   {
     "from": "E6-1",
@@ -502,7 +497,7 @@
   { "from": "Point 14", "to": "MOB", "Connection_type": "SL" },
   { "from": "Point 2", "to": "MOB", "Connection_type": "SL" },
   { "from": "NE", "to": "FOB2", "Connection_type": "TR" },
-  { "from": "LRT3", "to": "Hub-E1", "Connection_type": "HF" },
+  { "from": "LRT3", "to": "Hub-E1", "Connection_type": "HF", "IER": ["Location"] },
   { "from": "E6-5", "to": "LRT2", "Connection_type": "HF", "IER":["Logistics"] },
   { "from": "Ship", "to": "E6-2", "Connection_type": "HF" },
   { "from": "Ship", "to": "sb", "Connection_type": "HF" },
@@ -515,5 +510,11 @@
   { "from": "Grand Forks", "to": "E6-1", "Connection_type": "HF" },
   { "from": "Grand Forks", "to": "E6-2", "Connection_type": "HF" },
   { "from": "E", "to": "E6-1", "Connection_type": "HF" },
-  { "from": "E", "to": "E6-2", "Connection_type": "HF" }
+  { "from": "E", "to": "E6-2", "Connection_type": "HF" },
+    {
+    "from": "LRT1",
+    "to": "Hub-W1",
+    "Connection_type": "HF",
+    "IER": ["Location"]
+  }
 ]

@@ -63,7 +63,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Point 13" },
+      "properties": { "name": "Grand Forks" },
       "geometry": { "type": "Point", "coordinates": [-97.378979, 47.952266] }
     },
     {

@@ -266,7 +266,7 @@
   },
     {
     "from": "PENT",
-    "to": "Point 13",
+    "to": "Grand Forks",
     "Connection_type": "HF"
   },
    {
@@ -275,7 +275,7 @@
     "Connection_type": "HF"
   },
   {
-    "from": "Point 13",
+    "from": "Grand Forks",
     "to": "NE",
     "Connection_type": "HF"
   },

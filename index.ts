@@ -351,7 +351,7 @@ function colorByTypeRGBA(d: any): [number, number, number, number] {
         case "C": return [0, 200, 0, 220];
         case "RT": return [200, 0, 0, 220]; // Now Red
         case "HF": return [255, 105, 180, 220]; // Now Pink
-        case "SAT": return [128, 0, 128, 220];
+        case "SAT": return [79, 201, 75, 220];
         case "HF L": return [255, 255, 0, 220];
         case "U L": return [8, 232, 222, 220]; // Turquoise-like
         case "SL": return [255, 0, 127, 220]; // Hot Pink
@@ -784,7 +784,7 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
         { key: "RT", label: "Red", color: "rgb(200,0,0)" },
         { key: "HF", label: "Pink", color: "rgb(255,105,180)" },
         { key: "TR", label: "Orange", color: "rgb(255,165,0)" },
-        { key: "SAT", label: "Purple", color: "rgb(128,0,128)" },
+        { key: "SAT", label: "Light Green", color: "rgb(79, 201, 75)" },
         { key: "HF L", label: "Yellow", color: "rgb(255, 255, 0)" },
         { key: "U L", label: "Turquoise", color: "rgb(64,224,208)" },
         { key: "SL", label: "Hot Pink", color: "rgb(255,0,127)" },

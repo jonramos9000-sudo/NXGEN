@@ -261,6 +261,7 @@ const PinLogic = {
         "Bale HFCGS": "GREEN_GROUP",
         "M": "GREEN_GROUP",
         "NE": "GREEN_GROUP",
+        "bg": "GREEN_GROUP",
 
         // RED_GROUP
         "FOB1": "RED_GROUP",

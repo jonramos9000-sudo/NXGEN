@@ -307,7 +307,7 @@ const PinLogic = {
         "LRT2": "GREY_GROUP",
         "LRT3" : "GREY_GROUP",
 
-        "Oklahoma City": "OKC_GROUP"
+        "MOB": "OKC_GROUP"
 
     } as Record<string, PointType>,
 };
@@ -1438,8 +1438,8 @@ async function initMap(): Promise<void> {
         // Step 1: Turn off all filters, reveal OKC pin, and center camera.
         activeTypes.clear();
         activePointTypes.clear();
-        activePointTypes.add("OKC_GROUP"); // "Oklahoma City" is in OKC_GROUP
-        const okcPin = processedPins.find(p => getPointName(p) === "Oklahoma City");
+        activePointTypes.add("OKC_GROUP"); // "MOB" is in OKC_GROUP
+        const okcPin = processedPins.find(p => getPointName(p) === "MOB");
         const okcCoords = okcPin && 'geometry' in okcPin && okcPin.geometry.type === 'Point' ? asLngLat(okcPin) : null;
         if (okcCoords) {
             map.panTo({ lat: okcCoords[1], lng: okcCoords[0] });

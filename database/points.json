@@ -24,7 +24,7 @@
     {
       "type": "Feature",
       "properties": { "name": "E6-1", "icon": "airplane", "tech": "PR-16" },
-      "geometry": { "type": "Point", "coordinates": [-121.826695, 41.694258] }
+      "geometry": { "type": "Point", "coordinates": [ -127.807819, 43.699965] }
     },
     {
       "type": "Feature",
@@ -203,7 +203,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Oklahoma City", "type": "TMR" },
+      "properties": { "name": "MOB", "type": "TMR" },
       "geometry": { "type": "Point", "coordinates": [-97.5164, 35.4676] }
     },
     {
@@ -234,7 +234,7 @@
     {
       "type": "Feature",
       "properties": { "name": "E6-2", "icon": "airplane" },
-      "geometry": { "type": "Point", "coordinates": [-127.33667, 40.647058] }
+      "geometry": { "type": "Point", "coordinates": [-129.970953, 45.819748] }
     },
     {
       "type": "Feature",

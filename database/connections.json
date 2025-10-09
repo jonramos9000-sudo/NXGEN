@@ -367,12 +367,12 @@
     "IER": ["Message"]
   },
   {
-    "from": "Oklahoma City",
+    "from": "MOB",
     "to": "FOB1",
     "Connection_type": "RT"
   },
   {
-    "from": "Oklahoma City",
+    "from": "MOB",
     "to": "Ohio Pin",
     "Connection_type": "RT"
   },
@@ -441,17 +441,17 @@
   { "from": "MLST", "to": "sb", "Connection_type": "SAT" },
   { "from": "LRT1", "to": "Hub1", "Connection_type": "U L" },
   {
-    "from": "Oklahoma City",
+    "from": "MOB",
     "to": "Point 14",
     "Connection_type": "TR"
   },
   {
-    "from": "Oklahoma City",
+    "from": "MOB",
     "to": "Point 2",
     "Connection_type": "TR"
   },
   {
-    "from": "Oklahoma City",
+    "from": "MOB",
     "to": "bg",
     "Connection_type": "TR"
   },
@@ -483,9 +483,9 @@
   { "from": "bg", "to": "Point 14", "Connection_type": "HF" },
   { "from": "bg", "to": "Point 2", "Connection_type": "HF" },
   { "from": "Point 2", "to": "Point 14", "Connection_type": "HF" },
-  { "from": "bg", "to": "Oklahoma City", "Connection_type": "SL" },
-  { "from": "Point 14", "to": "Oklahoma City", "Connection_type": "SL" },
-  { "from": "Point 2", "to": "Oklahoma City", "Connection_type": "SL" },
+  { "from": "bg", "to": "MOB", "Connection_type": "SL" },
+  { "from": "Point 14", "to": "MOB", "Connection_type": "SL" },
+  { "from": "Point 2", "to": "MOB", "Connection_type": "SL" },
   { "from": "NE", "to": "Ohio Pin", "Connection_type": "TR" },
   { "from": "LRT3", "to": "Hub-E1", "Connection_type": "HF" },
   { "from": "E6-5", "to": "LRT2", "Connection_type": "HF", "IER":["Logistics"] },

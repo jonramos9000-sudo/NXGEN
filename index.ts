@@ -264,7 +264,7 @@ const PinLogic = {
 
         // RED_GROUP
         "FOB1": "RED_GROUP",
-        "Ohio Pin": "RED_GROUP",
+        "FOB2": "RED_GROUP",
 
         // TURQUOISE_GROUP
         "PENT": "TURQUOISE_GROUP",
@@ -819,7 +819,7 @@ function addMultiFilterControls(map: google.maps.Map, onChange: () => void) {
 
     const controlsAndButtonContainer = document.createElement('div');
     controlsAndButtonContainer.innerHTML = `
-        <div id="controls-container" style="position:absolute; z-index:5; top:60px; left:10px; font: 13px system-ui, sans-serif; display:flex; flex-direction:column; gap:10px; max-width: 200px;">
+        <div id="controls-container" style="position:absolute; z-index:5; top:60px; left:10px; font: 13px system-ui, sans-serif; display:flex; flex-direction:column; gap:10px; max-width: 200px; max-height: calc(100vh - 80px); overflow-y: auto; padding-right: 5px;">
             
             <div id="connection-legend-box" class="legend-box">
                 <div class="legend-header"><h2 style="font-size:16px; margin:0;">Connections</h2><button class="toggle-btn" data-target="connection-legend-box">-</button></div>

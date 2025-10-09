@@ -461,7 +461,7 @@ function getAggregatedWidth(d: any): number {
     if (count >= 3) {
         return 25;
     }
-    
+    return 0; // Return 0 if count is 0
 }
 
 // ---------------------- Filtering (GPU) ----------------------

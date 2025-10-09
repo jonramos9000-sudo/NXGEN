@@ -373,6 +373,21 @@
   },
   {
     "from": "MOB",
+    "to": "HUB-C1",
+    "Connection_type": "TR"
+  },
+  {
+    "from": "MOB",
+    "to": "HUB-C2",
+    "Connection_type": "TR"
+  },
+  {
+    "from": "MOB",
+    "to": "HUB-C3",
+    "Connection_type": "TR"
+  },
+  {
+    "from": "MOB",
     "to": "FOB2",
     "Connection_type": "RT"
   },
